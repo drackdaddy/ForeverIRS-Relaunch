@@ -43,19 +43,23 @@ function I.assess(snapshot)
         coverage=known.." / "..total.." activity counters readable · missing is not zero"}
 end
 
--- Unexplained gold: the share of a character's gold that the four itemized
--- income counters cannot account for. Computed from a capture on demand, so it
+-- Risk factor: the share of a character's gold that the four itemized income
+-- counters cannot account for, placed on a four-step scale. It gives players
+-- data to weigh and accuses no one. Computed from a capture on demand, so it
 -- sends no requests, uses no events, and stores nothing in ForeverIRSDB.
-I.RATING_MIN_GOLD = 1000000 -- 100g in copper; below this a single gift dominates the percentage.
+I.RATING_MIN_GOLD = 50000 -- 5g in copper.
+-- Each level's name and the lowest unexplained percentage that reaches it.
+I.RISK_LEVELS = {{"Low",0},{"Moderate",25},{"Elevated",50},{"High",75}}
+I.RISK_SCALE = "Scale: Low under 25%, Moderate 25-49%, Elevated 50-74%, High 75% or more unexplained."
 I.RATING_METHOD = "Looted, quest, vendor and auction income, compared with the larger of peak gold and total gold acquired. Tracked spending is left out, so this is a low estimate."
-I.RATING_NOTE = "This is not the chance that gold was bought. IRS cannot see where gold came from: gifts, alts, guild funds and player trades look the same as purchased gold."
+I.RATING_NOTE = "A risk factor is not an accusation or the chance that gold was bought. IRS cannot see where gold came from: gifts, alts, guild funds and player trades look the same as purchased gold."
 I.RATING_LINE = I.INCOME_DISCLAIMER.." Gifts, alts, guild funds and player trades look the same."
 I.RATING_MISSING = "Not rated: peak, acquired and all four income counters are needed."
 -- Larger of peak and acquired, because the game does not document whether
 -- trades and mail count toward acquired gold; this holds either way.
--- snapshot: a capture, or nil. Returns {percent,unexplained,received} when
--- rated, otherwise {reason}. A missing counter is never treated as zero: that
--- would inflate the percentage.
+-- snapshot: a capture, or nil. Returns {percent,level,risk,unexplained,received,
+-- itemized,peak,acquired} when rated, otherwise {reason}. A missing counter is
+-- never treated as zero: that would inflate the percentage.
 function I.rating(snapshot)
     local itemized=0
     for _,key in ipairs({"looted","quests","vendors","auctions"}) do
@@ -70,5 +74,10 @@ function I.rating(snapshot)
         return {reason="Not rated: under "..I.quantity(I.RATING_MIN_GOLD/10000).."g recorded."}
     end
     local unexplained=math.max(0,received-itemized)
-    return {percent=math.floor(unexplained/received*100),unexplained=unexplained,received=received}
+    -- Multiply first: 0.29*100 falls just short of 29 and would land one percent low.
+    local percent=math.floor(unexplained*100/received)
+    local level=1
+    for n,def in ipairs(I.RISK_LEVELS) do if percent>=def[2] then level=n end end
+    return {percent=percent,level=level,risk=I.RISK_LEVELS[level][1],unexplained=unexplained,
+        received=received,itemized=itemized,peak=peak,acquired=acquired}
 end

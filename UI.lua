@@ -6,14 +6,15 @@ local W,H=690,432
 local CHECK_HEIGHT=56
 -- Every tab starts directly under the headline figures.
 local CONTENT_TOP=-118
-local RATING_BAR_X,RATING_BAR_WIDTH=100,W-124
+local RATING_BAR_X,RATING_BAR_WIDTH=140,W-164
 local RATING_BAR_INSET=3
 local DIRECTORY_ROWS=8
 -- Drawn larger than the game's default panels: the small fonts are hard to
 -- read at 100%. /irs scale overrides this; the window still fits the screen.
 I.DEFAULT_SCALE=1.2
 local WHITE,GREY,GOLD,GREEN,RED={1,1,1},{.5,.5,.5},{1,.82,0},{.1,1,.1},{1,.2,.15}
-local INCOME_COLOR={.35,.65,.9}
+-- One color per I.RISK_LEVELS entry, lowest first.
+local RISK_COLORS={GREEN,GOLD,{1,.5,.1},RED}
 local MISSING="--"
 local TABS={"Ledger","Activity","History","Characters"}
 -- Section context makes the long statistic names redundant in the ledger.
@@ -351,11 +352,13 @@ function I.Render()
     band.title:SetText(a.title);band.title:SetTextColor(unpack(a.known>0 and WHITE or GREY))
     band.summary:SetText(a.summary)
     band.coverage:SetText(a.known.." / "..a.total.." readable")
-    local r=I.rating(s)
-    ui.ratingValue:SetText(r.percent and r.percent.."%" or MISSING);ui.ratingValue:SetTextColor(unpack(r.percent and WHITE or GREY))
-    ui.ratingDetail:SetText(r.percent and (I.coins(r.unexplained).." of "..I.coins(r.received).." is not covered by the income below.") or r.reason)
+    local r=I.rating(s);local riskColor=r.level and RISK_COLORS[r.level] or GREY
+    ui.ratingValue:SetText(r.risk or "Not rated");ui.ratingValue:SetTextColor(unpack(riskColor))
+    ui.ratingDetail:SetText(r.percent and (r.percent.."% unexplained: "..I.coins(r.unexplained).." of "..I.coins(r.received).." is not covered by the income below.") or r.reason)
     ui.ratingDetail:SetTextColor(unpack(r.percent and WHITE or GREY))
+    ui.bar:SetVertexColor(unpack(riskColor))
     ui.bar:SetWidth(math.max(.001,(RATING_BAR_WIDTH-2*RATING_BAR_INSET)*(r.percent or 0)/100));ui.bar:SetShown((r.percent or 0)>0)
+    for n,label in ipairs(ui.riskLabels) do label:SetTextColor(unpack(n==r.level and RISK_COLORS[n] or GREY)) end
     for n,p in ipairs(I.professions(s)) do
         local row=ui.activityProfessions[n];row.key=p.key
         row.name:SetText(p.label..(p.highest and "*" or ""));show(row.value,s,p.key)
@@ -382,27 +385,45 @@ local function makeLedger()
     -- Ledger tab: the rating, then the figures it is computed from.
     ui.body=CreateFrame("Frame",nil,ledger);ui.body:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,CONTENT_TOP);ui.body:SetSize(W,H)
     local body=ui.body
-    -- One neutral style at every percentage: no value is a pass or a failure.
+    -- A scale for the player to weigh, shown beside the figures behind it.
     local rating=CreateFrame("Frame",nil,body);rating:SetPoint("TOPLEFT",body,"TOPLEFT",10,0);rating:SetSize(W-20,82)
-    ui.ratingValue=text(rating,"GameFontHighlightLarge",4,0,92,42)
-    ui.ratingValue:SetFont(STANDARD_TEXT_FONT,28,"OUTLINE")
-    text(rating,"GameFontNormal",RATING_BAR_X,-2,RATING_BAR_WIDTH,18):SetText("Unexplained gold")
+    text(rating,"GameFontNormal",4,-2,130,16):SetText("Risk factor")
+    ui.ratingValue=text(rating,"GameFontHighlightLarge",4,-18,130,24)
+    ui.ratingValue:SetFont(STANDARD_TEXT_FONT,20,"OUTLINE")
     -- An opaque inset track and the game's textured border keep the full
     -- extent visible even when the fill is nearly empty.
     local barFrame=CreateFrame("Frame",nil,rating,"BackdropTemplate")
-    barFrame:SetPoint("TOPLEFT",rating,"TOPLEFT",RATING_BAR_X,-22);barFrame:SetSize(RATING_BAR_WIDTH,16)
+    barFrame:SetPoint("TOPLEFT",rating,"TOPLEFT",RATING_BAR_X,-4);barFrame:SetSize(RATING_BAR_WIDTH,16)
     barFrame:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
         tile=false,edgeSize=8,insets={left=2,right=2,top=2,bottom=2}})
     barFrame:SetBackdropColor(.08,.08,.08,1);barFrame:SetBackdropBorderColor(.75,.75,.75,1)
+    -- Dim bands and labels keep the whole scale in view at every reading.
+    local trackWidth=RATING_BAR_WIDTH-2*RATING_BAR_INSET
+    ui.riskLabels={}
+    for n,def in ipairs(I.RISK_LEVELS) do
+        local nextLevel=I.RISK_LEVELS[n+1]
+        local x,width=trackWidth*def[2]/100,trackWidth*((nextLevel and nextLevel[2] or 100)-def[2])/100
+        local c=RISK_COLORS[n]
+        fill(barFrame,RATING_BAR_INSET+x,-RATING_BAR_INSET,width,16-2*RATING_BAR_INSET,c[1],c[2],c[3],.2)
+        ui.riskLabels[n]=text(rating,"GameFontHighlightSmall",RATING_BAR_X+RATING_BAR_INSET+x,-22,width,14,"CENTER")
+        ui.riskLabels[n]:SetText(def[1])
+    end
     ui.bar=barFrame:CreateTexture(nil,"ARTWORK");ui.bar:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
-    ui.bar:SetVertexColor(unpack(INCOME_COLOR))
     ui.bar:SetPoint("TOPLEFT",barFrame,"TOPLEFT",RATING_BAR_INSET,-RATING_BAR_INSET);ui.bar:SetSize(.001,16-2*RATING_BAR_INSET)
     ui.ratingDetail=text(rating,"GameFontHighlightSmall",4,-46,W-28,14)
     text(rating,"GameFontNormalSmall",4,-62,W-28,14):SetText(I.RATING_LINE)
     rating:EnableMouse(true)
     rating:SetScript("OnEnter",function(self)
         if not GameTooltip then return end
-        GameTooltip:SetOwner(self,"ANCHOR_RIGHT");GameTooltip:SetText("Unexplained gold")
+        local r=I.rating(I.snapshot)
+        GameTooltip:SetOwner(self,"ANCHOR_RIGHT");GameTooltip:SetText("Risk factor")
+        if r.percent then
+            GameTooltip:AddLine(r.risk.." · "..r.percent.."% unexplained gold",1,1,1,true)
+            GameTooltip:AddLine("Peak gold: "..I.coins(r.peak),.8,.85,.9,true)
+            GameTooltip:AddLine("Total acquired: "..I.coins(r.acquired),.8,.85,.9,true)
+            GameTooltip:AddLine("Itemized income: "..I.coins(r.itemized),.8,.85,.9,true)
+        end
+        GameTooltip:AddLine(I.RISK_SCALE,1,1,1,true)
         GameTooltip:AddLine(I.RATING_METHOD,1,1,1,true)
         GameTooltip:AddLine(I.RATING_NOTE,1,.82,0,true)
         GameTooltip:AddLine(I.INCOME_TOTAL_NOTE,.8,.85,.9,true)
@@ -478,8 +499,11 @@ function I.Show(origin)
         ui={groups={},cards={},activityProfessions={},tabs={}}
         -- Header beside the portrait.
         ui.name=text(w,"GameFontHighlightLarge",62,-26,W-300,18)
-        ui.identity=text(w,"GameFontHighlightSmall",62,-45,W-76,12)
-        ui.age=text(w,"GameFontHighlightSmall",W-224,-27,214,14,"RIGHT")
+        ui.identity=text(w,"GameFontHighlightSmall",62,-45,W-308,12)
+        ui.age=text(w,"GameFontHighlightSmall",W-278,-27,214,14,"RIGHT")
+        text(w,"GameFontNormalSmall",W-60,-27,50,14,"RIGHT"):SetText("v"..I.VERSION)
+        local notice=text(w,"GameFontNormalSmall",W-226,-40,216,22,"RIGHT");notice:SetWordWrap(true)
+        notice:SetText(I.PLAYER_DISCLAIMER)
         -- Only a failed request or a response with no usable statistics needs
         -- a banner. Normal fetch details remain available in copied reports.
         local check=CreateFrame("Frame",nil,w,"BackdropTemplate");ui.verification=check;I.verificationPanel=check

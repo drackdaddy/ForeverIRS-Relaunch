@@ -1,10 +1,11 @@
 local _, I = ...
-I.VERSION = "0.6.0"
+I.VERSION = "1.0"
 I.DATA_BUILD = "1.60.1.70291"
 -- Only builds checked against the retained Achievement.db2 evidence belong
 -- here. Do not treat an unknown patch as checked just because the API replies.
 I.DATA_BUILDS = {["1.60.1.70124"]=true,["1.60.1.70291"]=true}
 I.DISCLAIMER = "Figures may be inaccurate, incomplete, or out of date. Game counters, resets, and addon errors can affect the results. Use them as a reference, not proof of a player's wealth or misconduct."
+I.PLAYER_DISCLAIMER = "This is informational and it's up to the player to determine wrongdoing."
 I.DATA_SOURCE = "Blizzard statistics API"
 I.DATA_SOURCE_NOTICE = "IRS reads Blizzard's statistics API directly; it does not depend on the Statistics page. Values are captured as returned by the client and are not independently verified."
 I.DATA_SOURCE_VERIFY = "This check confirms receipt and safe parsing only. It cannot prove that Blizzard's underlying counters are current, complete or correct."
@@ -230,7 +231,7 @@ end
 function I.report(s)
     if not s then return "No snapshot loaded." end
     local source=I.sourceStatus(s)
-    local lines={"Forever IRS · character statistics","",I.INCOME_DISCLAIMER:upper(),I.INCOME_SOURCES,I.INCOME_TRANSFERS,"",
+    local lines={"Forever IRS "..I.VERSION.." · character statistics",I.PLAYER_DISCLAIMER,"",I.INCOME_DISCLAIMER:upper(),I.INCOME_SOURCES,I.INCOME_TRANSFERS,"",
         "Accuracy disclaimer: "..I.DISCLAIMER,"",s.name..(s.realm~="" and " - "..s.realm or ""),
         "Observed: "..date("%Y-%m-%d %H:%M:%S",s.at).." · client "..s.build,
         "Data source: "..source.source.." (the Statistics page is not used)",
@@ -255,8 +256,9 @@ function I.report(s)
     for _,line in ipairs(assessment.evidence) do lines[#lines+1]="- "..line end
     lines[#lines+1]=I.ASSESSMENT_NOTE
     local rating=I.rating(s)
-    lines[#lines+1]="Unexplained gold: "..(rating.percent and rating.percent.."%" or "Not rated")
+    lines[#lines+1]="Risk factor: "..(rating.percent and rating.risk.." ("..rating.percent.."% unexplained gold)" or "Not rated")
     lines[#lines+1]=rating.percent and (I.money(rating.unexplained,true).." of "..I.money(rating.received,true).." is not covered by the four income rows.") or rating.reason
+    lines[#lines+1]=I.RISK_SCALE
     lines[#lines+1]=I.RATING_METHOD
     lines[#lines+1]=I.RATING_NOTE
     lines[#lines+1]=I.INCOME_SOURCES

@@ -7,7 +7,7 @@ A character statistics ledger for WoW Forever. View your own gold statistics, in
 - Total gold acquired, historical peak gold, and your own current carried gold.
 - Income sources, selected spending counters, auction activity, gameplay, and profession statistics.
 - An **Activity** view with every profession, quests, kills, dungeons, disenchants and their materials, fishing, honorable kills, travel, and deaths.
-- An **Unexplained gold** percentage: how much of a character's gold its itemized income cannot account for.
+- A **Risk factor** from Low to High, with the figures behind it: how much of a character's gold its itemized income cannot account for.
 - A factual **Recorded activity** summary with readable-counter counts; that summary does not grade characters or infer their play style.
 - A movable ledger that fits the screen, with an optional panel beside the normal Inspect window.
 - A searchable directory of all retained characters, sortable by peak gold, total acquired, level, name, last seen, or snapshot count.
@@ -32,7 +32,7 @@ Extract the release ZIP into your Forever client's `Interface/AddOns` directory.
 | `/irs reset` | Reset the window position; retain saved history. |
 | `/irs close` | Close the ledger. |
 
-The window uses the game's own frame, like the Inspect window. Switch views with the tabs along the bottom: **Ledger** (financial figures), **Activity** (every gameplay and profession counter), **History** (saved captures) and **Characters** (the saved-character directory). Hover **Unexplained gold** for how it is worked out, the activity summary on **Activity** for the returned counters, and any figure for where it came from.
+The window uses the game's own frame, like the Inspect window. The addon version is at the top right, above the reminder that this is informational and it's up to the player to determine wrongdoing. Switch views with the tabs along the bottom: **Ledger** (financial figures), **Activity** (every gameplay and profession counter), **History** (saved captures) and **Characters** (the saved-character directory). Hover **Risk factor** for the figures and how it is worked out, the activity summary on **Activity** for the returned counters, and any figure for where it came from.
 
 The normal Inspect window also has an **IRS** button. Drag the window by its title or header to move it; Escape closes it. **My character**, **Target**, **Refresh** and **Copy report** are at the bottom left; **Open with Inspect** is at the bottom right. If inspection is cooling down, a **Loading in…** countdown appears at the top and your requested inspection starts automatically when it ends; you do not need to press Refresh again. **Copy report** opens selectable text for manual copying; nothing is sent to chat. Changing the inspected character closes the previous report. Readable snapshots are saved automatically.
 
@@ -58,9 +58,20 @@ The income breakdown shows four sources: gold looted, quest rewards, vendor sale
 
 **Recorded gold acquired** displays Blizzard's separate **Total gold acquired** statistic. IRS does not calculate that headline by adding the four income rows. The breakdown cannot establish whether Blizzard included a particular gift, trade or mail payment in that separate total. These counters are not a complete record of gold received, and acquired gold is a gross figure, not profit or current wealth. Another player's current wallet is not exposed. Peak gold is a historical high, not their present balance.
 
-**Unexplained gold** is the share of a character's gold that the four income rows do not cover: `(received − itemized) ÷ received`, never below 0%. `itemized` is gold looted + quest rewards + vendor sales + auction earnings, and `received` is the larger of peak gold and total gold acquired. Using the larger figure means the result holds whether or not Blizzard counts trades and mail toward total gold acquired. Tracked spending is left out, so the figure is a low estimate.
+**This is informational and it's up to the player to determine wrongdoing.**
 
-**It is not the chance that someone bought gold.** IRS cannot see where gold came from: gifts, alts, guild funds, direct player sales, missing data, and counter resets can all raise it, and it has no way to tell them from purchased gold. The bar and text use the same neutral styling at every percentage. No percentage is a pass or a failure. A character is not rated when it has under 100g recorded, because a single gift would dominate the figure, or when any of the six counters is missing, because a missing counter is not zero.
+**Risk factor** puts unexplained gold on a four-step scale, so you can weigh the figures and decide for yourself:
+
+| Risk factor | Unexplained gold |
+| --- | --- |
+| Low | Under 25% |
+| Moderate | 25–49% |
+| Elevated | 50–74% |
+| High | 75% or more |
+
+**Unexplained gold** is the share of a character's gold that the four income rows do not cover: `(received − itemized) ÷ received`, never below 0%. `itemized` is gold looted + quest rewards + vendor sales + auction earnings, and `received` is the larger of peak gold and total gold acquired. Using the larger figure means the result holds whether or not Blizzard counts trades and mail toward total gold acquired. Tracked spending is left out, so the figure is a low estimate. The Ledger shows the percentage and amounts under the scale, and the tooltip adds peak gold, total acquired and itemized income.
+
+**A risk factor is not an accusation or the chance that someone bought gold.** IRS cannot see where gold came from: gifts, alts, guild funds, direct player sales, missing data, and counter resets can all raise it, and it has no way to tell them from purchased gold. A character is not rated when it has under 5g recorded or when any of the six counters is missing, because a missing counter is not zero. Small totals can reach High from a single gift, so check the amounts as well as the level.
 
 - A grey `--` means no value was captured, never zero. Hover the figure to see why: **not reported** (WoW returned no value) or **unavailable** (no safely readable value was captured, or the statistic/API was not available). Copied reports spell out the reason.
 - A reported numeric zero stays zero. Standard coin-icon amounts are converted to exact copper. Unknown localized formats remain display-only; the addon does not guess their value.
@@ -72,7 +83,7 @@ The income breakdown shows four sources: gold looted, quest rewards, vendor sale
 
 The summary shows how many readable activity counters have values above zero. It reports returned counts without classifying a character as active, abnormal, suspicious, or legitimate. New characters, bank alts and specialists can have different records. Missing counters are not zero, and gold amounts never change the activity summary.
 
-**A difference does not necessarily indicate wrongdoing** appears directly under **Unexplained gold** on Ledger. The same context appears in tooltips and at the start of copied reports. Older snapshots retain their original values and timestamps and are rated from those values; no history reset is needed.
+**A difference does not necessarily indicate wrongdoing** appears directly under the **Risk factor** on Ledger. The same context appears in tooltips and at the start of copied reports. Older snapshots retain their original values and timestamps and are rated from those values; no history reset is needed.
 
 ## Privacy and storage
 
@@ -88,7 +99,7 @@ If a request times out, keep the player nearby, leave combat, and click Refresh.
 
 ## Compatibility
 
-Version **0.6.0 Beta** targets **Forever 1.60.x**, Interface **16001**. All 36 statistic definitions were checked against client data **1.60.1.70291** on October 9, 2026: their IDs, labels, flags and criteria references are unchanged from the previously checked **1.60.1.70124**. Both builds are recognized, including when viewing saved captures. This checks the definitions, not whether live server values are current or accurate. Other WoW branches are not supported by this release. The interface is English; unknown localized numeric formats remain display-only. Later game patches may change statistic coverage or meaning and retain an unchecked-build warning until reviewed.
+Version **1.0** targets **Forever 1.60.x**, Interface **16001**. All 36 statistic definitions were checked against client data **1.60.1.70291** on October 9, 2026: their IDs, labels, flags and criteria references are unchanged from the previously checked **1.60.1.70124**. Both builds are recognized, including when viewing saved captures. This checks the definitions, not whether live server values are current or accurate. Other WoW branches are not supported by this release. The interface is English; unknown localized numeric formats remain display-only. Later game patches may change statistic coverage or meaning and retain an unchecked-build warning until reviewed.
 
 ## License
 
