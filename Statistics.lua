@@ -205,7 +205,7 @@ end
 function I.read(subject, own)
     local getter
     if own then getter=GetStatistic else getter=GetComparisonStatistic end
-    local snapshot={guid=subject.guid,name=subject.name,realm=subject.realm,class=subject.class,
+    local snapshot={guid=subject.guid,name=subject.name,class=subject.class,
         level=subject.level,guild=subject.guild,build=I.build(),at=GetServerTime(),own=own,values={},unavailable={},available=0}
     for _,field in ipairs(I.fields) do
         local valid=true
@@ -232,7 +232,7 @@ function I.report(s)
     if not s then return "No snapshot loaded." end
     local source=I.sourceStatus(s)
     local lines={"Forever IRS "..I.VERSION.." · character statistics",I.PLAYER_DISCLAIMER,"",I.INCOME_DISCLAIMER:upper(),I.INCOME_SOURCES,I.INCOME_TRANSFERS,"",
-        "Accuracy disclaimer: "..I.DISCLAIMER,"",s.name..(s.realm~="" and " - "..s.realm or ""),
+        "Accuracy disclaimer: "..I.DISCLAIMER,"",s.name,
         "Observed: "..date("%Y-%m-%d %H:%M:%S",s.at).." · client "..s.build,
         "Data source: "..source.source.." (the Statistics page is not used)",
         "Statistic definitions: "..source.definitions,

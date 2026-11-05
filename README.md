@@ -42,7 +42,7 @@ The addon checks every requested capture. For another player it waits for the in
 
 ## Saved-character directory
 
-Click the **Characters** tab or use `/irs history`. Each row shows the character's latest saved capture. The default is highest peak gold first. Click a column heading to sort; click it again to reverse. Your chosen sort order is saved. Search matches literal text in a character's name, realm, guild, or class.
+Click the **Characters** tab or use `/irs history`. Each row shows the character's latest saved capture. The default is highest peak gold first. Click a column heading to sort; click it again to reverse. Your chosen sort order is saved. Search matches literal text in a character's name, guild, or class.
 
 Click a row to open that character's saved ledger, then the **History** tab to view earlier captures. Browsing is local and preserves the original observation time. To refresh a saved character, target that same player nearby; IRS will not silently substitute your current target or your own character. Missing numeric values appear as `--` and sort last in either direction; an older known value is not substituted for a missing value in the latest capture.
 
@@ -87,7 +87,7 @@ The summary shows how many readable activity counters have values above zero. It
 
 ## Privacy and storage
 
-`ForeverIRSDB` is account-wide SavedVariables data, written by WoW on UI reload or logout. It contains preferences and character GUID, name, realm, class, level, guild, capture time, client build, and the available statistics. Your current wallet is stored only for self-captures. Each character retains their latest 20 snapshots; older captures are removed. Characters are no longer removed automatically when the directory exceeds 50 entries, so the file grows as you inspect more people. Characters already discarded by an older version cannot be recovered by this update. A failed request without a readable capture does not create a directory entry.
+`ForeverIRSDB` is account-wide SavedVariables data, written by WoW on UI reload or logout. It contains preferences and character GUID, name, class, level, guild, capture time, client build, and the available statistics. Your current wallet is stored only for self-captures. Each character retains their latest 20 snapshots; older captures are removed. Characters are no longer removed automatically when the directory exceeds 50 entries, so the file grows as you inspect more people. Characters already discarded by an older version cannot be recovered by this update. A failed request without a readable capture does not create a directory entry.
 
 There is no telemetry, automatic upload, addon-message exchange, chat broadcast, or background player scanning. The addon does not read other addons' saved data or require another addon. SavedVariables and copied reports can contain player identities; they are not included in release archives. To erase local history, close WoW and remove `ForeverIRS.lua` and its `.bak` file from your account's SavedVariables folder. `/irs reset` only resets the window position.
 

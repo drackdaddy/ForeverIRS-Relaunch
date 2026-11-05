@@ -55,9 +55,11 @@ end
 function I.subject(unit)
     if not UnitExists(unit) or not UnitIsPlayer(unit) then return nil end
     local guid=UnitGUID(unit);if not guid then return nil end
-    local name,realm=UnitFullName(unit)
+    -- Forever returns the surname where other clients return the realm.
+    local first,surname=UnitName(unit)
+    if type(issecretvalue)=="function" and (issecretvalue(first) or issecretvalue(surname)) then return nil end
     local class=UnitClass(unit)
-    return {guid=guid,name=name or "Unknown",realm=realm or GetRealmName() or "",class=class or "",
+    return {guid=guid,name=NameUtil.GetFullNameWithoutRealm(first,surname) or "Unknown",class=class or "",
         level=UnitLevel(unit),guild=GetGuildInfo(unit)}
 end
 function I.finish(snapshot)

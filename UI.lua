@@ -95,7 +95,6 @@ end
 local function identity(s)
     local parts={"Level "..tostring(s.level or "?").." "..I.text(s.class)}
     if s.guild and s.guild~="" then parts[#parts+1]="<"..I.text(s.guild)..">" end
-    if s.realm and s.realm~="" then parts[#parts+1]=I.text(s.realm) end
     return table.concat(parts,"  ·  ")
 end
 local function timestamp(at,short)
@@ -254,7 +253,7 @@ local function renderDirectory()
         if entry then
             local s=entry.snapshot
             row.name:SetText(I.text(s.name)..(s.own and " (you)" or ""));row.name:SetTextColor(unpack(classColor(s.class) or WHITE))
-            row.realm:SetText(I.text(s.realm).."  ·  "..I.text(s.class))
+            row.detail:SetText(I.text(s.class)..(s.guild and s.guild~="" and "  ·  <"..I.text(s.guild)..">" or ""))
             row.level:SetText(s.level and I.quantity(s.level) or MISSING)
             row.peak:SetText(I.coins(entry.peak));row.peak:SetTextColor(unpack(entry.peak~=nil and WHITE or GREY))
             row.acquired:SetText(I.coins(entry.acquired));row.acquired:SetTextColor(unpack(entry.acquired~=nil and WHITE or GREY))
@@ -274,7 +273,7 @@ local function makeDirectory()
     d.search=CreateFrame("EditBox",nil,d,"SearchBoxTemplate")
     d.search:SetSize(240,20);d.search:SetPoint("TOPLEFT",d,"TOPLEFT",22,-70)
     d.search:SetAutoFocus(false);d.search:SetMaxLetters(100);d.search:SetText(I.directoryQuery or "")
-    if d.search.Instructions then d.search.Instructions:SetText("Name, realm, guild or class") end
+    if d.search.Instructions then d.search.Instructions:SetText("Name, guild or class") end
     -- Hooked so the template keeps its instructions text and clear button.
     d.search:HookScript("OnTextChanged",function(self)
         I.directoryQuery=self:GetText();I.directoryPage=0;renderDirectory()
@@ -298,7 +297,7 @@ local function makeDirectory()
         row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight","ADD")
         row:SetScript("OnClick",function(self)if self.guid then I.OpenSaved(self.guid)end end)
         row.name=text(row,"GameFontHighlight",6,0,210,15)
-        row.realm=text(row,"GameFontDisableSmall",6,-14,210,12)
+        row.detail=text(row,"GameFontDisableSmall",6,-14,210,12)
         row.level=text(row,"GameFontHighlightSmall",220,0,44,27,"CENTER")
         row.peak=text(row,"GameFontHighlightSmall",264,0,124,27,"RIGHT")
         row.acquired=text(row,"GameFontHighlightSmall",394,0,124,27,"RIGHT")
