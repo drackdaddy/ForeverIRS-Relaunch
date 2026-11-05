@@ -1,9 +1,9 @@
 local _, I = ...
 I.VERSION = "1.0"
-I.DATA_BUILD = "1.60.1.70291"
+I.DATA_BUILD = "1.60.1.70790"
 -- Only builds checked against the retained Achievement.db2 evidence belong
 -- here. Do not treat an unknown patch as checked just because the API replies.
-I.DATA_BUILDS = {["1.60.1.70124"]=true,["1.60.1.70291"]=true}
+I.DATA_BUILDS = {["1.60.1.70124"]=true,["1.60.1.70291"]=true,["1.60.1.70790"]=true}
 I.DISCLAIMER = "Figures may be inaccurate, incomplete, or out of date. Game counters, resets, and addon errors can affect the results. Use them as a reference, not proof of a player's wealth or misconduct."
 I.PLAYER_DISCLAIMER = "This is informational and it's up to the player to determine wrongdoing."
 I.DATA_SOURCE = "Blizzard statistics API"

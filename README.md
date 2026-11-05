@@ -99,7 +99,7 @@ If a request times out, keep the player nearby, leave combat, and click Refresh.
 
 ## Compatibility
 
-Version **1.0** targets **Forever 1.60.x**, Interface **16001**. All 36 statistic definitions were checked against client data **1.60.1.70291** on October 9, 2026: their IDs, labels, flags and criteria references are unchanged from the previously checked **1.60.1.70124**. Both builds are recognized, including when viewing saved captures. This checks the definitions, not whether live server values are current or accurate. Other WoW branches are not supported by this release. The interface is English; unknown localized numeric formats remain display-only. Later game patches may change statistic coverage or meaning and retain an unchecked-build warning until reviewed.
+Version **1.0** targets **Forever 1.60.x**, Interface **16001**. All 36 statistic definitions were checked against client data **1.60.1.70790** on November 5, 2026: their IDs, labels, flags and criteria references are unchanged from the previously checked **1.60.1.70291** and **1.60.1.70124**. All three builds are recognized, including when viewing saved captures. This checks the definitions, not whether live server values are current or accurate. Other WoW branches are not supported by this release. The interface is English; unknown localized numeric formats remain display-only. Later game patches may change statistic coverage or meaning and retain an unchecked-build warning until reviewed.
 
 ## License
 
@@ -126,4 +126,4 @@ python3 scripts/package.py
 
 The package script uses an explicit file list, checks versions and load order, verifies ZIP contents, and writes a checksum. Research, tests, local records, screenshots, and machine-specific files are excluded. The optional source-only design preview uses synthetic data and is not an in-game screenshot.
 
-Statistic definitions: [Wago Achievement data, build 1.60.1.70291](https://wago.tools/db2/Achievement/csv?build=1.60.1.70291). Reference source files retained for development are excluded from the release.
+Statistic definitions: [Wago Achievement data, build 1.60.1.70790](https://wago.tools/db2/Achievement/csv?build=1.60.1.70790). Reference source files retained for development are excluded from the release.
