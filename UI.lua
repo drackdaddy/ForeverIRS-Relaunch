@@ -19,6 +19,15 @@ local MISSING="--"
 local TABS={"Ledger","Activity","History","Characters"}
 -- Section context makes the long statistic names redundant in the ledger.
 local SHORT={daily="Earned per day",posted="Auctions posted",purchases="Auctions won",largestSale="Largest sale",largestBid="Largest bid"}
+-- Ledger categories, one shown at a time: name, statistic keys, tooltip note.
+-- Professions has no fixed keys because its rows follow the character's ranks.
+local CATEGORIES={
+    {"Recorded income",{"looted","quests","vendors","auctions","daily"}},
+    {"Spending",{"travel","postage","barber","respec"},"Tracked categories; not all expenses."},
+    {"Auction activity",{"posted","purchases","largestSale","largestBid"}},
+    {"Professions"},
+}
+local ledgerCategory=1
 local w,ui
 local function fit(frame,width,height)
     local scale=I.db and I.db.scale or I.DEFAULT_SCALE
@@ -156,14 +165,25 @@ local function line(parent,x,y,width,index,valueWidth)
     r:EnableMouse(true);r:SetScript("OnEnter",explain);r:SetScript("OnLeave",hideTooltip)
     return r
 end
-local function section(parent,title,x,y,width,keys,full,note)
+local function section(parent,title,x,y,width,keys)
     heading(parent,title,x,y,width)
     local rows={}
     for n,key in ipairs(keys) do
-        local r=line(parent,x,y-20-(n-1)*15,width,n);r.key=key;r.note=note
-        r.name:SetText(not full and SHORT[key] or I.byKey[key][3]);rows[key]=r.value
+        local r=line(parent,x,y-20-(n-1)*15,width,n);r.key=key
+        r.name:SetText(I.byKey[key][3]);rows[key]=r.value
     end
     ui.groups[#ui.groups+1]=rows
+    return rows
+end
+-- Lays statistic rows in two equal columns, filling the left one first.
+-- parent: frame; count: number of rows; y: top of the first row. Returns the rows.
+local function grid(parent,count,y)
+    local rows,perColumn={},math.ceil(count/2)
+    for n=1,count do
+        local column=n>perColumn and 1 or 0
+        local slot=n-column*perColumn
+        rows[n]=line(parent,14+column*335,y-(slot-1)*15,325,slot)
+    end
     return rows
 end
 local function makeReport()
@@ -354,14 +374,17 @@ function I.Render()
     band.coverage:SetText(a.known.." / "..a.total.." readable")
     local r=I.rating(s);local riskColor=r.level and RISK_COLORS[r.level] or GREY
     ui.ratingValue:SetText(r.risk or "Not rated");ui.ratingValue:SetTextColor(unpack(riskColor))
-    ui.ratingDetail:SetText(r.percent and (r.percent.."% unexplained: "..I.coins(r.unexplained).." of "..I.coins(r.received).." is not covered by the income below.") or r.reason)
+    ui.ratingDetail:SetText(r.percent and (r.percent.."% unexplained: "..I.coins(r.unexplained).." of "..I.coins(r.received).." is not covered by recorded income.") or r.reason)
     ui.ratingDetail:SetTextColor(unpack(r.percent and WHITE or GREY))
     ui.bar:SetVertexColor(unpack(riskColor))
     ui.bar:SetWidth(math.max(.001,(RATING_BAR_WIDTH-2*RATING_BAR_INSET)*(r.percent or 0)/100));ui.bar:SetShown((r.percent or 0)>0)
     for n,label in ipairs(ui.riskLabels) do label:SetTextColor(unpack(n==r.level and RISK_COLORS[n] or GREY)) end
-    for n,p in ipairs(I.professions(s)) do
-        local row=ui.activityProfessions[n];row.key=p.key
-        row.name:SetText(p.label..(p.highest and "*" or ""));show(row.value,s,p.key)
+    local professions=I.professions(s)
+    for _,rows in ipairs({ui.ledgerProfessions,ui.activityProfessions}) do
+        for n,p in ipairs(professions) do
+            local row=rows[n];row.key=p.key
+            row.name:SetText(p.label..(p.highest and "*" or ""));show(row.value,s,p.key)
+        end
     end
     ui.body:SetShown(not I.historyMode and not I.activityMode)
     ui.history:SetShown(I.historyMode==true and not I.activityMode);ui.activity:SetShown(I.activityMode==true)
@@ -382,7 +405,7 @@ local function makeLedger()
         hit.key=def[1]~="wallet" and def[1] or nil;hit.note=def[3]
         hit:EnableMouse(true);hit:SetScript("OnEnter",hit.key and explain or explainWallet);hit:SetScript("OnLeave",hideTooltip)
     end
-    -- Ledger tab: the rating, then the figures it is computed from.
+    -- Ledger tab: the risk factor, then one category of figures at a time.
     ui.body=CreateFrame("Frame",nil,ledger);ui.body:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,CONTENT_TOP);ui.body:SetSize(W,H)
     local body=ui.body
     -- A scale for the player to weigh, shown beside the figures behind it.
@@ -432,13 +455,39 @@ local function makeLedger()
         GameTooltip:Show()
     end)
     rating:SetScript("OnLeave",hideTooltip)
-    section(body,"Recorded income",14,-98,210,{"looted","quests","vendors","auctions","daily"})
-    section(body,"Spending",239,-98,210,{"travel","postage","barber","respec"},false,"Tracked categories; not all expenses.")
-    section(body,"Auction activity",464,-98,210,{"posted","purchases","largestSale","largestBid"})
+    local function showCategory()
+        for n,panel in ipairs(ui.categories) do panel:SetShown(n==ledgerCategory) end
+    end
+    ui.categories={}
+    for n,category in ipairs(CATEGORIES) do
+        local panel=CreateFrame("Frame",nil,body);panel:SetPoint("TOPLEFT",body,"TOPLEFT",0,-92);panel:SetSize(W,120)
+        local keys=category[2]
+        local rows=grid(panel,keys and #keys or #I.professionKeys,-30)
+        if keys then
+            local values={}
+            for index,key in ipairs(keys) do
+                local r=rows[index];r.key=key;r.note=category[3]
+                r.name:SetText(SHORT[key] or I.byKey[key][3]);values[key]=r.value
+            end
+            ui.groups[#ui.groups+1]=values
+        else
+            ui.ledgerProfessions=rows
+            text(panel,"GameFontDisableSmall",W-198,-4,184,16,"RIGHT"):SetText("* highest rank recorded")
+        end
+        ui.categories[n]=panel
+    end
+    showCategory()
+    local picker=CreateFrame("DropdownButton",nil,body,"WowStyle1DropdownTemplate")
+    picker:SetPoint("TOPLEFT",body,"TOPLEFT",14,-92);picker:SetWidth(200)
+    picker:SetupMenu(function(_,root)
+        for n,category in ipairs(CATEGORIES) do
+            root:CreateRadio(category[1],function()return ledgerCategory==n end,function()ledgerCategory=n;showCategory()end)
+        end
+    end)
     -- Activity tab.
     ui.activity=CreateFrame("Frame",nil,ledger);ui.activity:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,CONTENT_TOP);ui.activity:SetSize(W,H)
     I.activityPanel=ui.activity
-    ui.activity.rows=section(ui.activity,"Play history",14,0,310,I.activityKeys,true)
+    ui.activity.rows=section(ui.activity,"Play history",14,0,310,I.activityKeys)
     -- Factual activity summary; hover for the returned counters.
     local band=CreateFrame("Frame",nil,ui.activity);band:SetPoint("TOPLEFT",ui.activity,"TOPLEFT",14,-162);band:SetSize(310,44)
     ui.activity.band=band

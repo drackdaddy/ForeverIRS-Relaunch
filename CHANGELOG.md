@@ -5,9 +5,10 @@
 - Add a **Risk factor** scale from Low to High, based on the share of a character's gold that looted, quest, vendor and auction income does not cover. It uses the larger of peak and total acquired gold, works on existing saved captures, and sends no extra requests. It replaces **Peak minus acquired**, which read zero whenever acquired exceeded peak.
 - Show the percentage and gold amounts with the scale, and peak, acquired and itemized figures in its tooltip, so players can weigh the data themselves. A risk factor is not an accusation or the chance that gold was bought; gifts, alts, guild funds and player trades look the same as purchased gold. Characters with under 5g recorded or a missing counter are not rated.
 - Show the version at the top right, with a reminder beneath it that this is informational and it's up to the player to determine wrongdoing. Copied reports carry the same reminder.
-- Declutter the window: it is now 690 × 432 instead of 690 × 568. Ledger shows only the risk factor and the financial figures, and activity and disclaimer text no longer repeats above every tab.
+- Declutter the window: it is now 690 × 432 instead of 690 × 568. Ledger shows the risk factor and one category of figures at a time, and activity and disclaimer text no longer repeats above every tab.
+- Replace the Ledger's stacked sections with a dropdown for Recorded income, Spending, Auction activity and Professions. It opens on Recorded income.
 - Replace the large stacked disclaimers with one line under the risk factor. The full context stays in tooltips and copied reports.
-- Move the activity summary to **Activity**, and the first-seen date and client build into the **History** heading. Remove the Ledger's Gameplay, Professions and Your local record blocks, which repeated other tabs.
+- Move the activity summary to **Activity**, and the first-seen date and client build into the **History** heading. Remove the Ledger's Gameplay and Your local record blocks, which repeated other tabs.
 - Move the notes under the headline figures into tooltips, and **Open with Inspect** to the bottom right.
 - Remove **Save snapshot**: readable captures already save automatically, so it could only report that a capture was already saved.
 - Show eight characters per page in **Characters** instead of nine, to fit the shorter window.
