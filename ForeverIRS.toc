@@ -2,7 +2,7 @@
 ## Title: Forever IRS
 ## Notes: A private gold-statistics ledger for yourself and players you inspect.
 ## Author: Forever IRS contributors
-## Version: 0.5.5
+## Version: 0.6.0
 ## SavedVariables: ForeverIRSDB
 ## IconTexture: Interface\AddOns\ForeverIRS\Assets\Icon.tga
 ## X-License: MIT

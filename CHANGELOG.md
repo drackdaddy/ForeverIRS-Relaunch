@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0 — 2026-11-05 — Beta
+
+- Add **Unexplained gold**: the share of a character's gold that looted, quest, vendor and auction income does not cover. It uses the larger of peak and total acquired gold, works on existing saved captures, and sends no extra requests. It replaces **Peak minus acquired**, which read zero whenever acquired exceeded peak.
+- Unexplained gold is not the chance that gold was bought. Gifts, alts, guild funds and player trades look the same as purchased gold, and characters with under 100g recorded or a missing counter are not rated.
+- Declutter the window: it is now 690 × 432 instead of 690 × 568. Ledger shows only the rating and the financial figures, and rating, activity and disclaimer text no longer repeats above every tab.
+- Replace the large stacked disclaimers with one line under the rating. The full context stays in tooltips and copied reports.
+- Move the activity summary to **Activity**, and the first-seen date and client build into the **History** heading. Remove the Ledger's Gameplay, Professions and Your local record blocks, which repeated other tabs.
+- Move the notes under the headline figures into tooltips, and **Open with Inspect** to the bottom right.
+- Remove **Save snapshot**: readable captures already save automatically, so it could only report that a capture was already saved.
+- Show eight characters per page in **Characters** instead of nine, to fit the shorter window.
+
 ## 0.5.5 — 2026-10-09 — Beta
 
 - Replace gameplay judgments with a factual summary of recorded activity and neutral gold comparisons.

@@ -2,11 +2,13 @@ local _, I = ...
 -- Built from the client's own templates (verified in the Forever UI source)
 -- so the ledger matches Forever's Inspect window: metal frame, portrait,
 -- bottom tabs, red panel buttons, coin icons.
-local W,H=690,568
-local INCOME_NOTE_HEIGHT=88
+local W,H=690,432
 local CHECK_HEIGHT=56
-local GAP_BAR_X,GAP_BAR_WIDTH=268,160
-local GAP_BAR_INSET=3
+-- Every tab starts directly under the headline figures.
+local CONTENT_TOP=-118
+local RATING_BAR_X,RATING_BAR_WIDTH=100,W-124
+local RATING_BAR_INSET=3
+local DIRECTORY_ROWS=8
 -- Drawn larger than the game's default panels: the small fonts are hard to
 -- read at 100%. /irs scale overrides this; the window still fits the screen.
 I.DEFAULT_SCALE=1.2
@@ -15,7 +17,7 @@ local INCOME_COLOR={.35,.65,.9}
 local MISSING="--"
 local TABS={"Ledger","Activity","History","Characters"}
 -- Section context makes the long statistic names redundant in the ledger.
-local SHORT={daily="Earned per day",posted="Auctions posted",purchases="Auctions won",largestSale="Largest sale",largestBid="Largest bid",disenchanted="Disenchants"}
+local SHORT={daily="Earned per day",posted="Auctions posted",purchases="Auctions won",largestSale="Largest sale",largestBid="Largest bid"}
 local w,ui
 local function fit(frame,width,height)
     local scale=I.db and I.db.scale or I.DEFAULT_SCALE
@@ -134,6 +136,13 @@ local function explain(self)
         GameTooltip:AddLine(I.INCOME_DISCLAIMER,1,.82,0,true)
     end
     if I.byKey[key][5] then GameTooltip:AddLine("Highest rank recorded; the profession may since have been unlearned.",.8,.8,.8,true) end
+    if self.note then GameTooltip:AddLine(self.note,.8,.85,.9,true) end
+    GameTooltip:Show()
+end
+local function explainWallet(self)
+    if not GameTooltip then return end
+    GameTooltip:SetOwner(self,"ANCHOR_RIGHT");GameTooltip:SetText(ui.walletTitle:GetText())
+    GameTooltip:AddLine(I.snapshot and not I.snapshot.own and "Not visible for other players." or "Shown for your own characters.",1,1,1,true)
     GameTooltip:Show()
 end
 -- One striped statistic line: gold label, white value, hover for its source.
@@ -146,11 +155,11 @@ local function line(parent,x,y,width,index,valueWidth)
     r:EnableMouse(true);r:SetScript("OnEnter",explain);r:SetScript("OnLeave",hideTooltip)
     return r
 end
-local function section(parent,title,x,y,width,keys,full)
+local function section(parent,title,x,y,width,keys,full,note)
     heading(parent,title,x,y,width)
     local rows={}
     for n,key in ipairs(keys) do
-        local r=line(parent,x,y-20-(n-1)*15,width,n);r.key=key
+        local r=line(parent,x,y-20-(n-1)*15,width,n);r.key=key;r.note=note
         r.name:SetText(not full and SHORT[key] or I.byKey[key][3]);rows[key]=r.value
     end
     ui.groups[#ui.groups+1]=rows
@@ -192,9 +201,11 @@ function I.RefreshAge()
 end
 local function renderHistory()
     local h=ui.history;local s=I.snapshot;local all=s and I.history(s.guid) or {}
+    local entry=s and I.db.characters[s.guid]
     local pages=math.max(1,math.ceil(#all/9))
     I.historyPage=math.max(0,math.min(I.historyPage or 0,pages-1))
-    h.caption:SetText("Local snapshots  ·  "..#all.." saved  ·  newest first")
+    h.caption:SetText("Local snapshots  ·  "..#all.." / 20 saved  ·  first seen "..(entry and timestamp(entry.firstSeen,true) or MISSING)
+        .."  ·  client "..(s and I.text(s.build) or I.build()))
     for index,row in ipairs(h.rows) do
         local position=#all-(I.historyPage*9+index-1);local snap=all[position]
         if snap then
@@ -215,7 +226,7 @@ local function renderHistory()
 end
 local function renderDirectory()
     local d=ui.directory;local rows,total=I.directoryRows(I.directoryQuery)
-    local pages=math.max(1,math.ceil(#rows/9))
+    local pages=math.max(1,math.ceil(#rows/DIRECTORY_ROWS))
     I.directoryPage=math.max(0,math.min(I.directoryPage or 0,pages-1))
     d.caption:SetText(#rows.." / "..total.." characters")
     local sort=I.db.directorySort
@@ -226,7 +237,7 @@ local function renderDirectory()
         if active then header.arrow:SetTexCoord(0,1,sort.descending and 1 or 0,sort.descending and 0 or 1) end
     end
     for index,row in ipairs(d.rows) do
-        local entry=rows[I.directoryPage*9+index]
+        local entry=rows[I.directoryPage*DIRECTORY_ROWS+index]
         row.guid=entry and entry.guid or nil
         if entry then
             local s=entry.snapshot
@@ -268,28 +279,28 @@ local function makeDirectory()
         b.arrow:SetPoint("RIGHT",b,"RIGHT",-6,0);b.arrow:Hide()
         d.headers[key]=b
     end
-    for index=1,9 do
+    for index=1,DIRECTORY_ROWS do
         local row=CreateFrame("Button",nil,d)
-        row:SetPoint("TOPLEFT",d,"TOPLEFT",14,-118-(index-1)*29);row:SetSize(W-30,29)
-        if index%2==1 then fill(row,0,0,W-30,29,1,1,1,.05) end
+        row:SetPoint("TOPLEFT",d,"TOPLEFT",14,-118-(index-1)*27);row:SetSize(W-30,27)
+        if index%2==1 then fill(row,0,0,W-30,27,1,1,1,.05) end
         row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight","ADD")
         row:SetScript("OnClick",function(self)if self.guid then I.OpenSaved(self.guid)end end)
-        row.name=text(row,"GameFontHighlight",6,-1,210,15)
-        row.realm=text(row,"GameFontDisableSmall",6,-15,210,12)
-        row.level=text(row,"GameFontHighlightSmall",220,0,44,29,"CENTER")
-        row.peak=text(row,"GameFontHighlightSmall",264,0,124,29,"RIGHT")
-        row.acquired=text(row,"GameFontHighlightSmall",394,0,124,29,"RIGHT")
-        row.lastSeen=text(row,"GameFontHighlightSmall",524,0,82,29,"RIGHT",{.8,.8,.8})
-        row.count=text(row,"GameFontHighlightSmall",612,0,42,29,"RIGHT")
+        row.name=text(row,"GameFontHighlight",6,0,210,15)
+        row.realm=text(row,"GameFontDisableSmall",6,-14,210,12)
+        row.level=text(row,"GameFontHighlightSmall",220,0,44,27,"CENTER")
+        row.peak=text(row,"GameFontHighlightSmall",264,0,124,27,"RIGHT")
+        row.acquired=text(row,"GameFontHighlightSmall",394,0,124,27,"RIGHT")
+        row.lastSeen=text(row,"GameFontHighlightSmall",524,0,82,27,"RIGHT",{.8,.8,.8})
+        row.count=text(row,"GameFontHighlightSmall",612,0,42,27,"RIGHT")
         d.rows[index]=row
     end
     d.empty=text(d,"GameFontDisable",40,-190,W-80,50,"CENTER");d.empty:SetWordWrap(true)
     d.previous=button(d,"Previous",84,function()I.directoryPage=(I.directoryPage or 0)-1;renderDirectory()end)
-    d.previous:SetPoint("TOPLEFT",d,"TOPLEFT",14,-386)
-    d.page=text(d,"GameFontHighlightSmall",100,-386,96,22,"CENTER")
+    d.previous:SetPoint("TOPLEFT",d,"TOPLEFT",14,-338)
+    d.page=text(d,"GameFontHighlightSmall",100,-338,96,22,"CENTER")
     d.next=button(d,"Next",84,function()I.directoryPage=(I.directoryPage or 0)+1;renderDirectory()end)
-    d.next:SetPoint("TOPLEFT",d,"TOPLEFT",198,-386)
-    text(d,"GameFontDisableSmall",300,-386,W-316,22,"RIGHT"):SetText("20 snapshots kept per character  ·  saved locally")
+    d.next:SetPoint("TOPLEFT",d,"TOPLEFT",198,-338)
+    text(d,"GameFontDisableSmall",300,-338,W-316,22,"RIGHT"):SetText("20 snapshots kept per character  ·  saved locally")
     d:SetScript("OnHide",function()d.search:ClearFocus()end)
 end
 local function selectTab(index)
@@ -315,7 +326,7 @@ function I.Render()
     ui.ledger:SetPoint("TOPLEFT",w,"TOPLEFT",0,-offset)
     ui.ledger:SetShown(not directory);ui.directory:SetShown(directory)
     ui.verification:SetShown(showError)
-    ui.copyButton:SetShown(not directory);ui.saveButton:SetShown(not directory)
+    ui.copyButton:SetShown(not directory)
     PanelTemplates_SetTab(w,directory and 4 or I.historyMode and 3 or I.activityMode and 2 or 1)
     ui.status:SetText(I.text(I.status or ""));ui.auto:SetChecked(I.db.autoInspect);I.RefreshAge()
     ui.source:SetText(I.sourceLine(not directory and I.snapshot or nil))
@@ -335,63 +346,84 @@ function I.Render()
     show(ui.cards.acquired,s,"acquired");show(ui.cards.peak,s,"peak")
     local wallet=s and s.own and s.wallet
     ui.cards.wallet:SetText(wallet and I.coins(wallet) or MISSING);ui.cards.wallet:SetTextColor(unpack(wallet and WHITE or GREY))
-    ui.walletNote:SetText(s and not s.own and "Not visible for other players" or "Shown for your own characters")
     for _,rows in ipairs(ui.groups) do for key,f in pairs(rows) do show(f,s,key) end end
-    local a=I.assess(s);local band=I.assessmentPanel
+    local a=I.assess(s);local band=ui.activity.band
     band.title:SetText(a.title);band.title:SetTextColor(unpack(a.known>0 and WHITE or GREY))
-    band.summary:SetText(a.summary);band.summary:SetTextColor(unpack(WHITE))
-    band.coverage:SetText(a.known.." / "..a.total.." counters readable")
-    local gap,ratio=I.gap(s)
-    ui.gap:SetText(gap~=nil and I.coins(gap) or MISSING);ui.gap:SetTextColor(unpack(gap~=nil and WHITE or GREY))
-    ui.bar:SetVertexColor(unpack(INCOME_COLOR))
-    ui.bar:SetWidth(math.max(.001,ratio and (GAP_BAR_WIDTH-2*GAP_BAR_INSET)*ratio or .001));ui.bar:SetShown(ratio~=nil and ratio>0)
-    local over=ratio==1 and I.numeric(s,"acquired")>I.numeric(s,"peak")
-    ui.gapShare:SetText(ratio and ("Recorded income: "..math.floor(ratio*100)..(over and "%+" or "%").." of peak")
-        or (gap~=nil and "Share unavailable: zero peak" or "Share unavailable"))
-    ui.gapShare:SetTextColor(unpack(ratio and WHITE or GREY))
-    local professions=I.professions(s)
-    local positive={}
-    for _,p in ipairs(professions) do if p.n and p.n>0 then positive[#positive+1]=p end end
-    for n,row in ipairs(ui.professions) do
-        local p=positive[n];row.key=p and p.key
-        row.name:SetText(p and p.label..(p.highest and "*" or "") or n==1 and "No ranks recorded" or "")
-        row.value:SetText(p and I.quantity(p.n) or "")
-    end
-    ui.profNote:SetText(#positive>4 and "+"..(#positive-4).." more in Activity  ·  * highest recorded" or "* highest recorded; may be unlearned")
-    for n,row in ipairs(ui.activityProfessions) do
-        local p=professions[n];row.key=p.key
+    band.summary:SetText(a.summary)
+    band.coverage:SetText(a.known.." / "..a.total.." readable")
+    local r=I.rating(s)
+    ui.ratingValue:SetText(r.percent and r.percent.."%" or MISSING);ui.ratingValue:SetTextColor(unpack(r.percent and WHITE or GREY))
+    ui.ratingDetail:SetText(r.percent and (I.coins(r.unexplained).." of "..I.coins(r.received).." is not covered by the income below.") or r.reason)
+    ui.ratingDetail:SetTextColor(unpack(r.percent and WHITE or GREY))
+    ui.bar:SetWidth(math.max(.001,(RATING_BAR_WIDTH-2*RATING_BAR_INSET)*(r.percent or 0)/100));ui.bar:SetShown((r.percent or 0)>0)
+    for n,p in ipairs(I.professions(s)) do
+        local row=ui.activityProfessions[n];row.key=p.key
         row.name:SetText(p.label..(p.highest and "*" or ""));show(row.value,s,p.key)
     end
-    local history=s and I.history(s.guid) or {};local entry=s and I.db.characters[s.guid]
-    ui.saved.count:SetText(tostring(#history).." / 20")
-    ui.saved.first:SetText(entry and timestamp(entry.firstSeen,true) or MISSING)
-    ui.saved.last:SetText(s and timestamp(s.at,true) or MISSING)
-    ui.saved.build:SetText(s and I.text(s.build) or I.build())
     ui.body:SetShown(not I.historyMode and not I.activityMode)
     ui.history:SetShown(I.historyMode==true and not I.activityMode);ui.activity:SetShown(I.activityMode==true)
     if I.historyMode then renderHistory() end
 end
 local function makeLedger()
     local ledger=CreateFrame("Frame",nil,w);ledger:SetPoint("TOPLEFT",w,"TOPLEFT",0,0);ledger:SetSize(W,H);ui.ledger=ledger
-    -- Headline figures.
-    fill(ledger,10,-64,W-20,56,0,0,0,.3)
-    for n,def in ipairs({{"acquired","Recorded gold acquired","Blizzard's statistic; not a full ledger"},
-        {"peak","Most gold ever held","Historical high, not today's wallet"},{"wallet","Current wallet",""}}) do
+    -- Headline figures, on every tab. Their caveats live in the tooltips.
+    fill(ledger,10,-64,W-20,46,0,0,0,.3)
+    for n,def in ipairs({{"acquired","Recorded gold acquired","Blizzard's statistic; not a full ledger."},
+        {"peak","Most gold ever held","Historical high, not today's wallet."},{"wallet","Current wallet"}}) do
         local x=14+(n-1)*225
         local title=text(ledger,"GameFontNormalSmall",x,-68,210,12);title:SetText(def[2])
         ui.cards[def[1]]=text(ledger,"GameFontHighlightLarge",x,-82,210,22)
-        local note=text(ledger,"GameFontDisableSmall",x,-104,210,12);note:SetText(def[3])
-        if def[1]=="wallet" then ui.walletTitle=title;ui.walletNote=note end
-        if n>1 then fill(ledger,x-8,-68,1,48,1,1,1,.1) end
-        local hit=CreateFrame("Frame",nil,ledger);hit:SetPoint("TOPLEFT",ledger,"TOPLEFT",x,-66);hit:SetSize(210,52)
-        if def[1]~="wallet" then hit.key=def[1];hit:EnableMouse(true);hit:SetScript("OnEnter",explain);hit:SetScript("OnLeave",hideTooltip) end
+        if def[1]=="wallet" then ui.walletTitle=title end
+        if n>1 then fill(ledger,x-8,-68,1,38,1,1,1,.1) end
+        local hit=CreateFrame("Frame",nil,ledger);hit:SetPoint("TOPLEFT",ledger,"TOPLEFT",x,-66);hit:SetSize(210,42)
+        hit.key=def[1]~="wallet" and def[1] or nil;hit.note=def[3]
+        hit:EnableMouse(true);hit:SetScript("OnEnter",hit.key and explain or explainWallet);hit:SetScript("OnLeave",hideTooltip)
     end
+    -- Ledger tab: the rating, then the figures it is computed from.
+    ui.body=CreateFrame("Frame",nil,ledger);ui.body:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,CONTENT_TOP);ui.body:SetSize(W,H)
+    local body=ui.body
+    -- One neutral style at every percentage: no value is a pass or a failure.
+    local rating=CreateFrame("Frame",nil,body);rating:SetPoint("TOPLEFT",body,"TOPLEFT",10,0);rating:SetSize(W-20,82)
+    ui.ratingValue=text(rating,"GameFontHighlightLarge",4,0,92,42)
+    ui.ratingValue:SetFont(STANDARD_TEXT_FONT,28,"OUTLINE")
+    text(rating,"GameFontNormal",RATING_BAR_X,-2,RATING_BAR_WIDTH,18):SetText("Unexplained gold")
+    -- An opaque inset track and the game's textured border keep the full
+    -- extent visible even when the fill is nearly empty.
+    local barFrame=CreateFrame("Frame",nil,rating,"BackdropTemplate")
+    barFrame:SetPoint("TOPLEFT",rating,"TOPLEFT",RATING_BAR_X,-22);barFrame:SetSize(RATING_BAR_WIDTH,16)
+    barFrame:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
+        tile=false,edgeSize=8,insets={left=2,right=2,top=2,bottom=2}})
+    barFrame:SetBackdropColor(.08,.08,.08,1);barFrame:SetBackdropBorderColor(.75,.75,.75,1)
+    ui.bar=barFrame:CreateTexture(nil,"ARTWORK");ui.bar:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    ui.bar:SetVertexColor(unpack(INCOME_COLOR))
+    ui.bar:SetPoint("TOPLEFT",barFrame,"TOPLEFT",RATING_BAR_INSET,-RATING_BAR_INSET);ui.bar:SetSize(.001,16-2*RATING_BAR_INSET)
+    ui.ratingDetail=text(rating,"GameFontHighlightSmall",4,-46,W-28,14)
+    text(rating,"GameFontNormalSmall",4,-62,W-28,14):SetText(I.RATING_LINE)
+    rating:EnableMouse(true)
+    rating:SetScript("OnEnter",function(self)
+        if not GameTooltip then return end
+        GameTooltip:SetOwner(self,"ANCHOR_RIGHT");GameTooltip:SetText("Unexplained gold")
+        GameTooltip:AddLine(I.RATING_METHOD,1,1,1,true)
+        GameTooltip:AddLine(I.RATING_NOTE,1,.82,0,true)
+        GameTooltip:AddLine(I.INCOME_TOTAL_NOTE,.8,.85,.9,true)
+        GameTooltip:AddLine(I.INCOME_TRANSFERS,1,1,1,true)
+        GameTooltip:AddLine("Missing data and counter resets can also affect the difference.",.8,.8,.8,true)
+        GameTooltip:Show()
+    end)
+    rating:SetScript("OnLeave",hideTooltip)
+    section(body,"Recorded income",14,-98,210,{"looted","quests","vendors","auctions","daily"})
+    section(body,"Spending",239,-98,210,{"travel","postage","barber","respec"},false,"Tracked categories; not all expenses.")
+    section(body,"Auction activity",464,-98,210,{"posted","purchases","largestSale","largestBid"})
+    -- Activity tab.
+    ui.activity=CreateFrame("Frame",nil,ledger);ui.activity:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,CONTENT_TOP);ui.activity:SetSize(W,H)
+    I.activityPanel=ui.activity
+    ui.activity.rows=section(ui.activity,"Play history",14,0,310,I.activityKeys,true)
     -- Factual activity summary; hover for the returned counters.
-    local band=CreateFrame("Frame",nil,ledger);band:SetPoint("TOPLEFT",ledger,"TOPLEFT",10,-126);band:SetSize(W-20,40)
-    I.assessmentPanel=band
-    band.title=text(band,"GameFontHighlight",4,-1,400,18)
-    band.coverage=text(band,"GameFontDisableSmall",W-244,-1,220,18,"RIGHT")
-    band.summary=text(band,"GameFontHighlightSmall",4,-21,W-48,14)
+    local band=CreateFrame("Frame",nil,ui.activity);band:SetPoint("TOPLEFT",ui.activity,"TOPLEFT",14,-162);band:SetSize(310,44)
+    ui.activity.band=band
+    band.title=text(band,"GameFontHighlightSmall",4,0,150,14)
+    band.coverage=text(band,"GameFontDisableSmall",154,0,152,14,"RIGHT")
+    band.summary=text(band,"GameFontHighlightSmall",4,-15,302,26);band.summary:SetWordWrap(true)
     band:EnableMouse(true)
     band:SetScript("OnEnter",function(self)
         if not GameTooltip then return end
@@ -402,80 +434,18 @@ local function makeLedger()
         GameTooltip:Show()
     end)
     band:SetScript("OnLeave",hideTooltip)
-    -- Peak gold against recorded income, under the activity summary on every ledger tab.
-    local gapLine=CreateFrame("Frame",nil,ledger);gapLine:SetPoint("TOPLEFT",ledger,"TOPLEFT",10,-168);gapLine:SetSize(W-20,18)
-    text(gapLine,"GameFontNormalSmall",4,0,150,18):SetText("Peak minus acquired")
-    ui.gap=text(gapLine,"GameFontHighlightSmall",156,0,104,18)
-    -- An opaque inset track and the game's textured border keep the full
-    -- extent visible even when the income fill is nearly empty.
-    local barFrame=CreateFrame("Frame",nil,gapLine,"BackdropTemplate")
-    barFrame:SetPoint("TOPLEFT",gapLine,"TOPLEFT",GAP_BAR_X,-1);barFrame:SetSize(GAP_BAR_WIDTH,16)
-    barFrame:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
-        tile=false,edgeSize=8,insets={left=2,right=2,top=2,bottom=2}})
-    barFrame:SetBackdropColor(.08,.08,.08,1);barFrame:SetBackdropBorderColor(.75,.75,.75,1)
-    ui.bar=barFrame:CreateTexture(nil,"ARTWORK");ui.bar:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
-    ui.bar:SetPoint("TOPLEFT",barFrame,"TOPLEFT",GAP_BAR_INSET,-GAP_BAR_INSET);ui.bar:SetSize(.001,16-2*GAP_BAR_INSET)
-    local shareX=GAP_BAR_X+GAP_BAR_WIDTH+12
-    ui.gapShare=text(gapLine,"GameFontNormal",shareX,0,W-24-shareX,18,"RIGHT")
-    gapLine:EnableMouse(true)
-    gapLine:SetScript("OnEnter",function(self)
-        if not GameTooltip then return end
-        GameTooltip:SetOwner(self,"ANCHOR_RIGHT");GameTooltip:SetText("Peak minus recorded acquired gold")
-        GameTooltip:AddLine("Most gold ever held minus total gold acquired, never below zero. The bar compares acquired gold with peak gold, capped at 100%; 100%+ means acquired exceeds peak.",1,1,1,true)
-        if I.gap(I.snapshot)==nil then GameTooltip:AddLine("Needs both totals; one is missing from this capture.",.8,.8,.8,true) end
-        GameTooltip:AddLine(I.INCOME_SOURCES,1,1,1,true)
-        GameTooltip:AddLine(I.INCOME_TOTAL_NOTE,.8,.85,.9,true)
-        GameTooltip:AddLine(I.INCOME_TRANSFERS,1,1,1,true)
-        GameTooltip:AddLine(I.INCOME_DISCLAIMER,1,.82,0,true)
-        GameTooltip:AddLine("Missing data and counter resets can also affect the difference.",.8,.8,.8,true)
-        GameTooltip:Show()
-    end)
-    gapLine:SetScript("OnLeave",hideTooltip)
-    ui.incomeDisclaimer=text(ledger,"GameFontHighlight",14,-190,W-28,22,"LEFT",GOLD)
-    ui.incomeDisclaimer:SetFont(STANDARD_TEXT_FONT,16,"OUTLINE")
-    ui.incomeDisclaimer:SetText(I.INCOME_DISCLAIMER)
-    I.incomeDisclaimer=ui.incomeDisclaimer
-    ui.incomeTransfers=text(ledger,"GameFontNormal",14,-216,W-28,40,"LEFT",GOLD)
-    ui.incomeTransfers:SetFont(STANDARD_TEXT_FONT,16,"OUTLINE")
-    ui.incomeTransfers:SetText(I.INCOME_TRANSFERS)
-    ui.incomeTransfers:SetWordWrap(true)
-    I.incomeTransfers=ui.incomeTransfers
-    ui.incomeNote=text(ledger,"GameFontHighlightSmall",14,-260,W-28,14)
-    ui.incomeNote:SetText(I.INCOME_SOURCES)
-    ui.incomeNote:SetWordWrap(true)
-    I.incomeNote=ui.incomeNote
-    -- Ledger tab.
-    ui.body=CreateFrame("Frame",nil,ledger);ui.body:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,-INCOME_NOTE_HEIGHT);ui.body:SetSize(W,H)
-    local body=ui.body
-    section(body,"Recorded income",14,-192,210,{"looted","quests","vendors","auctions","daily"})
-    section(body,"Spending",239,-192,210,{"travel","postage","barber","respec"})
-    text(body,"GameFontDisableSmall",243,-272,206,15):SetText("Tracked categories; not all expenses")
-    section(body,"Auction activity",464,-192,210,{"posted","purchases","largestSale","largestBid"})
-    section(body,"Gameplay",14,-301,210,{"questCount","kills","dungeons","disenchanted"})
-    heading(body,"Professions",239,-301,210)
-    for n=1,4 do ui.professions[n]=line(body,239,-321-(n-1)*15,210,n,60) end
-    ui.profNote=text(body,"GameFontDisableSmall",243,-382,206,14)
-    heading(body,"Your local record",464,-301,210)
-    for n,def in ipairs({{"count","Snapshots"},{"first","First seen"},{"last","Captured"},{"build","Client"}}) do
-        local r=line(body,464,-321-(n-1)*15,210,n,130);r:EnableMouse(false)
-        r.name:SetText(def[2]);ui.saved[def[1]]=r.value
-    end
-    -- Activity tab.
-    ui.activity=CreateFrame("Frame",nil,ledger);ui.activity:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,-INCOME_NOTE_HEIGHT);ui.activity:SetSize(W,H)
-    I.activityPanel=ui.activity
-    ui.activity.rows=section(ui.activity,"Play history",14,-192,310,I.activityKeys,true)
-    heading(ui.activity,"Professions",349,-192,325)
-    text(ui.activity,"GameFontDisableSmall",349+325-184,-192,180,16,"RIGHT"):SetText("* highest rank recorded")
-    for n=1,#I.professionKeys do ui.activityProfessions[n]=line(ui.activity,349,-212-(n-1)*15,325,n) end
+    heading(ui.activity,"Professions",349,0,325)
+    text(ui.activity,"GameFontDisableSmall",349+325-184,0,180,16,"RIGHT"):SetText("* highest rank recorded")
+    for n=1,#I.professionKeys do ui.activityProfessions[n]=line(ui.activity,349,-20-(n-1)*15,325,n) end
     ui.activity.professions=ui.activityProfessions
     -- History tab.
-    ui.history=CreateFrame("Frame",nil,ledger);ui.history:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,-INCOME_NOTE_HEIGHT);ui.history:SetSize(W,H)
+    ui.history=CreateFrame("Frame",nil,ledger);ui.history:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,CONTENT_TOP);ui.history:SetSize(W,H)
     local h=ui.history;h.rows={}
-    h.caption=heading(h,"",14,-192,W-30)
+    h.caption=heading(h,"",14,0,W-30)
     local columns={{"Observed",14,180,"LEFT"},{"Peak gold",194,150,"RIGHT"},{"Total acquired",344,160,"RIGHT"},{"Increase",504,166,"RIGHT"}}
-    for _,def in ipairs(columns) do text(h,"GameFontNormalSmall",def[2]+4,-214,def[3]-8,14,def[4]):SetText(def[1]) end
+    for _,def in ipairs(columns) do text(h,"GameFontNormalSmall",def[2]+4,-22,def[3]-8,14,def[4]):SetText(def[1]) end
     for n=1,9 do
-        local row=CreateFrame("Frame",nil,h);row:SetPoint("TOPLEFT",h,"TOPLEFT",14,-230-(n-1)*17);row:SetSize(W-30,17)
+        local row=CreateFrame("Frame",nil,h);row:SetPoint("TOPLEFT",h,"TOPLEFT",14,-38-(n-1)*17);row:SetSize(W-30,17)
         if n%2==1 then fill(row,0,0,W-30,17,1,1,1,.05) end
         local cells={}
         for index,key in ipairs({"time","peak","total","delta"}) do
@@ -485,11 +455,11 @@ local function makeLedger()
         cells.frame=row;h.rows[n]=cells
     end
     h.previous=button(h,"Previous",84,function()I.historyPage=(I.historyPage or 0)-1;renderHistory()end)
-    h.previous:SetPoint("TOPLEFT",h,"TOPLEFT",14,-388)
-    h.page=text(h,"GameFontHighlightSmall",100,-388,96,22,"CENTER")
+    h.previous:SetPoint("TOPLEFT",h,"TOPLEFT",14,-196)
+    h.page=text(h,"GameFontHighlightSmall",100,-196,96,22,"CENTER")
     h.next=button(h,"Next",84,function()I.historyPage=(I.historyPage or 0)+1;renderHistory()end)
-    h.next:SetPoint("TOPLEFT",h,"TOPLEFT",198,-388)
-    text(h,"GameFontDisableSmall",300,-388,W-316,22,"RIGHT"):SetText("No increase is shown across counter resets or client builds")
+    h.next:SetPoint("TOPLEFT",h,"TOPLEFT",198,-196)
+    text(h,"GameFontDisableSmall",300,-196,W-316,22,"RIGHT"):SetText("No increase is shown across counter resets or client builds")
 end
 function I.Show(origin)
     if not w then
@@ -505,15 +475,11 @@ function I.Show(origin)
         end)
         w:HookScript("OnHide",function()I.cancel(nil);if I.reportWindow then I.reportWindow:Hide() end end)
         tinsert(UISpecialFrames,"ForeverIRSWindow")
-        ui={groups={},cards={},professions={},activityProfessions={},saved={},tabs={}}
+        ui={groups={},cards={},activityProfessions={},tabs={}}
         -- Header beside the portrait.
         ui.name=text(w,"GameFontHighlightLarge",62,-26,W-300,18)
-        ui.identity=text(w,"GameFontHighlightSmall",62,-45,W-300,12)
+        ui.identity=text(w,"GameFontHighlightSmall",62,-45,W-76,12)
         ui.age=text(w,"GameFontHighlightSmall",W-224,-27,214,14,"RIGHT")
-        ui.auto=CreateFrame("CheckButton",nil,w,"UICheckButtonTemplate");ui.auto:SetSize(22,22)
-        ui.auto:SetPoint("TOPLEFT",w,"TOPLEFT",W-134,-40)
-        ui.auto:SetScript("OnClick",function(self)I.db.autoInspect=self:GetChecked() and true or false end)
-        text(w,"GameFontNormalSmall",W-110,-40,100,22):SetText("Open with Inspect")
         -- Only a failed request or a response with no usable statistics needs
         -- a banner. Normal fetch details remain available in copied reports.
         local check=CreateFrame("Frame",nil,w,"BackdropTemplate");ui.verification=check;I.verificationPanel=check
@@ -531,17 +497,16 @@ function I.Show(origin)
         sourceHit:SetPoint("TOPLEFT",footer,"TOPLEFT",14,-(H-44));sourceHit:SetSize(W-28,14)
         ui.source=text(sourceHit,"GameFontDisableSmall",0,0,W-28,14)
         sourceHit:EnableMouse(true);sourceHit:SetScript("OnEnter",explainSource);sourceHit:SetScript("OnLeave",hideTooltip)
-        -- Button bar: subject on the left, record actions on the right.
+        -- Button bar: actions on the left, the one setting on the right.
         local me=button(w,"My character",104,function()I.audit("player")end);me:SetPoint("BOTTOMLEFT",w,"BOTTOMLEFT",6,4)
         local target=button(w,"Target",80,function()I.audit("target")end);target:SetPoint("LEFT",me,"RIGHT",2,0)
         ui.refreshButton=button(w,"Refresh",80,function()I.Refresh()end);ui.refreshButton:SetPoint("LEFT",target,"RIGHT",2,0)
-        ui.saveButton=button(w,"Save snapshot",112,function()
-            if not I.snapshot then I.update("Load a character's statistics first.")
-            elseif I.save(I.snapshot) then I.update(I.sessionOnly and "Saved for this session only; stored history needs a newer addon." or "Snapshot saved locally.")
-            else I.update("This capture is already saved. Refresh to request a new observation.") end
-        end)
-        ui.saveButton:SetPoint("BOTTOMRIGHT",w,"BOTTOMRIGHT",-6,4)
-        ui.copyButton=button(w,"Copy report",104,openReport);ui.copyButton:SetPoint("RIGHT",ui.saveButton,"LEFT",-2,0)
+        ui.copyButton=button(w,"Copy report",104,openReport);ui.copyButton:SetPoint("LEFT",ui.refreshButton,"RIGHT",2,0)
+        local autoLabel=text(w,"GameFontNormalSmall",0,0,100,22,"RIGHT");autoLabel:SetText("Open with Inspect")
+        autoLabel:ClearAllPoints();autoLabel:SetPoint("BOTTOMRIGHT",w,"BOTTOMRIGHT",-10,4)
+        ui.auto=CreateFrame("CheckButton",nil,w,"UICheckButtonTemplate");ui.auto:SetSize(22,22)
+        ui.auto:SetPoint("RIGHT",autoLabel,"LEFT",0,0)
+        ui.auto:SetScript("OnClick",function(self)I.db.autoInspect=self:GetChecked() and true or false end)
         makeDirectory()
         for index,name in ipairs(TABS) do
             local tab=CreateFrame("Button","ForeverIRSWindowTab"..index,w,"PanelTabButtonTemplate")

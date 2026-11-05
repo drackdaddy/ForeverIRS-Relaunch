@@ -1,5 +1,5 @@
 local _, I = ...
-I.VERSION = "0.5.5"
+I.VERSION = "0.6.0"
 I.DATA_BUILD = "1.60.1.70291"
 -- Only builds checked against the retained Achievement.db2 evidence belong
 -- here. Do not treat an unknown patch as checked just because the API replies.
@@ -159,11 +159,6 @@ end
 function I.numeric(snapshot,key)
     return snapshot and snapshot.values and snapshot.values[key] and snapshot.values[key].number
 end
-function I.gap(snapshot)
-    local peak,total=I.numeric(snapshot,"peak"),I.numeric(snapshot,"acquired")
-    if peak==nil or total==nil then return nil end
-    return math.max(0,peak-total), peak>0 and math.min(1,total/peak) or nil
-end
 function I.sourceStatus(snapshot)
     local client=snapshot and snapshot.build or I.build()
     local selfAPI=type(GetStatistic)=="function"
@@ -259,8 +254,11 @@ function I.report(s)
     lines[#lines+1]=assessment.coverage
     for _,line in ipairs(assessment.evidence) do lines[#lines+1]="- "..line end
     lines[#lines+1]=I.ASSESSMENT_NOTE
-    local gap=I.gap(s)
-    lines[#lines+1]="Peak minus recorded acquired gold (minimum zero): "..I.money(gap,true)
+    local rating=I.rating(s)
+    lines[#lines+1]="Unexplained gold: "..(rating.percent and rating.percent.."%" or "Not rated")
+    lines[#lines+1]=rating.percent and (I.money(rating.unexplained,true).." of "..I.money(rating.received,true).." is not covered by the four income rows.") or rating.reason
+    lines[#lines+1]=I.RATING_METHOD
+    lines[#lines+1]=I.RATING_NOTE
     lines[#lines+1]=I.INCOME_SOURCES
     lines[#lines+1]=I.INCOME_TOTAL_NOTE
     lines[#lines+1]=I.INCOME_TRANSFERS
