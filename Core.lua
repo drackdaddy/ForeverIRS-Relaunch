@@ -159,7 +159,7 @@ function I.audit(unit,origin)
     I.cancel(nil)
     I.verification=nil
     if I.reportWindow then I.reportWindow:Hide() end
-    I.origin=origin;I.unit=unit;I.snapshot=nil;I.subjectInfo=I.subject(unit);I.historyMode=false;I.activityMode=false
+    I.origin=origin;I.unit=unit;I.snapshot=nil;I.subjectInfo=I.subject(unit);I.historyMode=false
     if I.Show then I.Show(origin) end
     if not I.supported() then failCheck("This version supports WoW Forever (1.60.x). Other clients are not verified.");return end
     if not I.subjectInfo then failCheck("Select a nearby player, then click Target. Use My character to view yourself.");return end
@@ -170,7 +170,7 @@ function I.audit(unit,origin)
 end
 function I.OpenDirectory()
     if not I.db then I.initialize() end
-    I.cancel(nil);I.origin="directory";I.directoryMode=true;I.historyMode=false;I.activityMode=false
+    I.cancel(nil);I.origin="directory";I.directoryMode=true;I.historyMode=false
     I.verification=nil
     if I.reportWindow then I.reportWindow:Hide() end
     I.status="Latest saved capture per character · missing figures sort last · click a row to open its ledger."
@@ -182,7 +182,7 @@ function I.OpenSaved(guid)
     I.cancel(nil);I.origin="saved";I.unit=nil;I.snapshot=snapshot;I.subjectInfo=nil
     I.verification=nil
     if I.reportWindow then I.reportWindow:Hide() end
-    I.directoryMode=false;I.savedView=true;I.historyMode=false;I.activityMode=false;I.historyPage=0
+    I.directoryMode=false;I.savedView=true;I.historyMode=false;I.historyPage=0
     I.status="Saved snapshot · click History for earlier captures. Refresh requires this same character nearby."
     I.Show("saved");return true
 end

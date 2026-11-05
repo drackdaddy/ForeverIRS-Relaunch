@@ -16,7 +16,7 @@ local WHITE,GREY,GOLD,GREEN,RED={1,1,1},{.5,.5,.5},{1,.82,0},{.1,1,.1},{1,.2,.15
 -- One color per I.RISK_LEVELS entry, lowest first.
 local RISK_COLORS={GREEN,GOLD,{1,.5,.1},RED}
 local MISSING="--"
-local TABS={"Ledger","Activity","History","Characters"}
+local TABS={"Ledger","History","Characters"}
 -- Section context makes the long statistic names redundant in the ledger.
 local SHORT={daily="Earned per day",posted="Auctions posted",purchases="Auctions won",largestSale="Largest sale",largestBid="Largest bid"}
 -- Ledger categories, one shown at a time: name, statistic keys, tooltip note.
@@ -26,6 +26,7 @@ local CATEGORIES={
     {"Spending",{"travel","postage","barber","respec"},"Tracked categories; not all expenses."},
     {"Auction activity",{"posted","purchases","largestSale","largestBid"}},
     {"Professions"},
+    {"Activity",I.activityKeys},
 }
 local ledgerCategory=1
 local w,ui
@@ -164,16 +165,6 @@ local function line(parent,x,y,width,index,valueWidth)
     r.value=text(r,"GameFontHighlightSmall",width-valueWidth-4,0,valueWidth,15,"RIGHT")
     r:EnableMouse(true);r:SetScript("OnEnter",explain);r:SetScript("OnLeave",hideTooltip)
     return r
-end
-local function section(parent,title,x,y,width,keys)
-    heading(parent,title,x,y,width)
-    local rows={}
-    for n,key in ipairs(keys) do
-        local r=line(parent,x,y-20-(n-1)*15,width,n);r.key=key
-        r.name:SetText(I.byKey[key][3]);rows[key]=r.value
-    end
-    ui.groups[#ui.groups+1]=rows
-    return rows
 end
 -- Lays statistic rows in two equal columns, filling the left one first.
 -- parent: frame; count: number of rows; y: top of the first row. Returns the rows.
@@ -326,13 +317,13 @@ local function makeDirectory()
 end
 local function selectTab(index)
     if PlaySound and SOUNDKIT then PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB) end
-    if index==4 then I.OpenDirectory();return end
+    if index==3 then I.OpenDirectory();return end
     if I.directoryMode then
         -- The directory hint no longer applies once a ledger is back on screen.
         I.status=I.snapshot and (I.snapshot.available.." / "..#I.fields.." counters available") or ""
     end
-    I.directoryMode=false;I.activityMode=index==2;I.historyMode=index==3
-    if index==3 then I.historyPage=0 end
+    I.directoryMode=false;I.historyMode=index==2
+    if index==2 then I.historyPage=0 end
     I.Render()
 end
 function I.Render()
@@ -348,7 +339,7 @@ function I.Render()
     ui.ledger:SetShown(not directory);ui.directory:SetShown(directory)
     ui.verification:SetShown(showError)
     ui.copyButton:SetShown(not directory)
-    PanelTemplates_SetTab(w,directory and 4 or I.historyMode and 3 or I.activityMode and 2 or 1)
+    PanelTemplates_SetTab(w,directory and 3 or I.historyMode and 2 or 1)
     ui.status:SetText(I.text(I.status or ""));ui.auto:SetChecked(I.db.autoInspect);I.RefreshAge()
     ui.source:SetText(I.sourceLine(not directory and I.snapshot or nil))
     ui.source:SetTextColor(unpack(I.sourceColor(not directory and I.snapshot or nil)))
@@ -368,7 +359,7 @@ function I.Render()
     local wallet=s and s.own and s.wallet
     ui.cards.wallet:SetText(wallet and I.coins(wallet) or MISSING);ui.cards.wallet:SetTextColor(unpack(wallet and WHITE or GREY))
     for _,rows in ipairs(ui.groups) do for key,f in pairs(rows) do show(f,s,key) end end
-    local a=I.assess(s);local band=ui.activity.band
+    local a=I.assess(s);local band=ui.activityBand
     band.title:SetText(a.title);band.title:SetTextColor(unpack(a.known>0 and WHITE or GREY))
     band.summary:SetText(a.summary)
     band.coverage:SetText(a.known.." / "..a.total.." readable")
@@ -379,15 +370,12 @@ function I.Render()
     ui.bar:SetVertexColor(unpack(riskColor))
     ui.bar:SetWidth(math.max(.001,(RATING_BAR_WIDTH-2*RATING_BAR_INSET)*(r.percent or 0)/100));ui.bar:SetShown((r.percent or 0)>0)
     for n,label in ipairs(ui.riskLabels) do label:SetTextColor(unpack(n==r.level and RISK_COLORS[n] or GREY)) end
-    local professions=I.professions(s)
-    for _,rows in ipairs({ui.ledgerProfessions,ui.activityProfessions}) do
-        for n,p in ipairs(professions) do
-            local row=rows[n];row.key=p.key
-            row.name:SetText(p.label..(p.highest and "*" or ""));show(row.value,s,p.key)
-        end
+    for n,p in ipairs(I.professions(s)) do
+        local row=ui.ledgerProfessions[n];row.key=p.key
+        row.name:SetText(p.label..(p.highest and "*" or ""));show(row.value,s,p.key)
     end
-    ui.body:SetShown(not I.historyMode and not I.activityMode)
-    ui.history:SetShown(I.historyMode==true and not I.activityMode);ui.activity:SetShown(I.activityMode==true)
+    ui.body:SetShown(not I.historyMode)
+    ui.history:SetShown(I.historyMode==true)
     if I.historyMode then renderHistory() end
 end
 local function makeLedger()
@@ -460,7 +448,7 @@ local function makeLedger()
     end
     ui.categories={}
     for n,category in ipairs(CATEGORIES) do
-        local panel=CreateFrame("Frame",nil,body);panel:SetPoint("TOPLEFT",body,"TOPLEFT",0,-92);panel:SetSize(W,120)
+        local panel=CreateFrame("Frame",nil,body);panel:SetPoint("TOPLEFT",body,"TOPLEFT",0,-92);panel:SetSize(W,150)
         local keys=category[2]
         local rows=grid(panel,keys and #keys or #I.professionKeys,-30)
         if keys then
@@ -476,24 +464,12 @@ local function makeLedger()
         end
         ui.categories[n]=panel
     end
-    showCategory()
-    local picker=CreateFrame("DropdownButton",nil,body,"WowStyle1DropdownTemplate")
-    picker:SetPoint("TOPLEFT",body,"TOPLEFT",14,-92);picker:SetWidth(200)
-    picker:SetupMenu(function(_,root)
-        for n,category in ipairs(CATEGORIES) do
-            root:CreateRadio(category[1],function()return ledgerCategory==n end,function()ledgerCategory=n;showCategory()end)
-        end
-    end)
-    -- Activity tab.
-    ui.activity=CreateFrame("Frame",nil,ledger);ui.activity:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,CONTENT_TOP);ui.activity:SetSize(W,H)
-    I.activityPanel=ui.activity
-    ui.activity.rows=section(ui.activity,"Play history",14,0,310,I.activityKeys)
-    -- Factual activity summary; hover for the returned counters.
-    local band=CreateFrame("Frame",nil,ui.activity);band:SetPoint("TOPLEFT",ui.activity,"TOPLEFT",14,-162);band:SetSize(310,44)
-    ui.activity.band=band
-    band.title=text(band,"GameFontHighlightSmall",4,0,150,14)
-    band.coverage=text(band,"GameFontDisableSmall",154,0,152,14,"RIGHT")
-    band.summary=text(band,"GameFontHighlightSmall",4,-15,302,26);band.summary:SetWordWrap(true)
+    -- Factual activity summary under the Activity rows; hover for the returned counters.
+    local band=CreateFrame("Frame",nil,ui.categories[#CATEGORIES]);band:SetPoint("TOPLEFT",ui.categories[#CATEGORIES],"TOPLEFT",14,-110);band:SetSize(W-28,32)
+    ui.activityBand=band
+    band.title=text(band,"GameFontHighlightSmall",4,0,300,14)
+    band.coverage=text(band,"GameFontDisableSmall",W-186,0,150,14,"RIGHT")
+    band.summary=text(band,"GameFontHighlightSmall",4,-16,W-40,14)
     band:EnableMouse(true)
     band:SetScript("OnEnter",function(self)
         if not GameTooltip then return end
@@ -504,10 +480,14 @@ local function makeLedger()
         GameTooltip:Show()
     end)
     band:SetScript("OnLeave",hideTooltip)
-    heading(ui.activity,"Professions",349,0,325)
-    text(ui.activity,"GameFontDisableSmall",349+325-184,0,180,16,"RIGHT"):SetText("* highest rank recorded")
-    for n=1,#I.professionKeys do ui.activityProfessions[n]=line(ui.activity,349,-20-(n-1)*15,325,n) end
-    ui.activity.professions=ui.activityProfessions
+    showCategory()
+    local picker=CreateFrame("DropdownButton",nil,body,"WowStyle1DropdownTemplate")
+    picker:SetPoint("TOPLEFT",body,"TOPLEFT",14,-92);picker:SetWidth(200)
+    picker:SetupMenu(function(_,root)
+        for n,category in ipairs(CATEGORIES) do
+            root:CreateRadio(category[1],function()return ledgerCategory==n end,function()ledgerCategory=n;showCategory()end)
+        end
+    end)
     -- History tab.
     ui.history=CreateFrame("Frame",nil,ledger);ui.history:SetPoint("TOPLEFT",ledger,"TOPLEFT",0,CONTENT_TOP);ui.history:SetSize(W,H)
     local h=ui.history;h.rows={}
@@ -545,7 +525,7 @@ function I.Show(origin)
         end)
         w:HookScript("OnHide",function()I.cancel(nil);if I.reportWindow then I.reportWindow:Hide() end end)
         tinsert(UISpecialFrames,"ForeverIRSWindow")
-        ui={groups={},cards={},activityProfessions={},tabs={}}
+        ui={groups={},cards={},tabs={}}
         -- Header beside the portrait.
         ui.name=text(w,"GameFontHighlightLarge",62,-26,W-300,18)
         ui.identity=text(w,"GameFontHighlightSmall",62,-45,W-308,12)

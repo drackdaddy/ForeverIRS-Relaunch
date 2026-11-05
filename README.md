@@ -6,7 +6,7 @@ A character statistics ledger for WoW Forever. View your own gold statistics, in
 
 - Total gold acquired, historical peak gold, and your own current carried gold.
 - Income sources, selected spending counters, auction activity, gameplay, and profession statistics.
-- An **Activity** view with every profession, quests, kills, dungeons, disenchants and their materials, fishing, honorable kills, travel, and deaths.
+- **Professions** and **Activity** categories with every profession, quests, kills, dungeons, disenchants and their materials, fishing, honorable kills, travel, and deaths.
 - A **Risk factor** from Low to High, with the figures behind it: how much of a character's gold its itemized income cannot account for.
 - A factual **Recorded activity** summary with readable-counter counts; that summary does not grade characters or infer their play style.
 - A movable ledger that fits the screen, with an optional panel beside the normal Inspect window.
@@ -32,7 +32,7 @@ Extract the release ZIP into your Forever client's `Interface/AddOns` directory.
 | `/irs reset` | Reset the window position; retain saved history. |
 | `/irs close` | Close the ledger. |
 
-The window uses the game's own frame, like the Inspect window. The addon version is at the top right, above the reminder that this is informational and it's up to the player to determine wrongdoing. Switch views with the tabs along the bottom: **Ledger** (the risk factor, plus a dropdown for Recorded income, Spending, Auction activity and Professions, opening on Recorded income), **Activity** (every gameplay and profession counter), **History** (saved captures) and **Characters** (the saved-character directory). Hover **Risk factor** for the figures and how it is worked out, the activity summary on **Activity** for the returned counters, and any figure for where it came from.
+The window uses the game's own frame, like the Inspect window. The addon version is at the top right, above the reminder that this is informational and it's up to the player to determine wrongdoing. Switch views with the tabs along the bottom: **Ledger** (the risk factor, plus a dropdown for Recorded income, Spending, Auction activity, Professions and Activity, opening on Recorded income), **History** (saved captures) and **Characters** (the saved-character directory). Hover **Risk factor** for the figures and how it is worked out, the activity summary in the **Activity** category for the returned counters, and any figure for where it came from.
 
 The normal Inspect window also has an **IRS** button. Drag the window by its title or header to move it; Escape closes it. **My character**, **Target**, **Refresh** and **Copy report** are at the bottom left; **Open with Inspect** is at the bottom right. If inspection is cooling down, a **Loading in…** countdown appears at the top and your requested inspection starts automatically when it ends; you do not need to press Refresh again. **Copy report** opens selectable text for manual copying; nothing is sent to chat. Changing the inspected character closes the previous report. Readable snapshots are saved automatically.
 
@@ -76,7 +76,7 @@ The income breakdown shows four sources: gold looted, quest rewards, vendor sale
 - A grey `--` means no value was captured, never zero. Hover the figure to see why: **not reported** (WoW returned no value) or **unavailable** (no safely readable value was captured, or the statistic/API was not available). Copied reports spell out the reason.
 - A reported numeric zero stays zero. Standard coin-icon amounts are converted to exact copper. Unknown localized formats remain display-only; the addon does not guess their value.
 - Spending shows only the listed categories, not every expense. Income minus these counters is not a complete profit calculation.
-- Profession ranks marked `*` are highest recorded ranks and may belong to a profession no longer learned. The Ledger's Professions category, **Activity** and the report include every queried profession, including zeros and missing values. Disenchants count destroyed items; disenchant materials count their outputs, not extra crafting actions.
+- Profession ranks marked `*` are highest recorded ranks and may belong to a profession no longer learned. The Ledger's **Professions** category and the report include every queried profession, including zeros and missing values. Disenchants count destroyed items; disenchant materials count their outputs, not extra crafting actions.
 - **First seen** means the first locally saved observation, not character creation. History increases compare neighboring observations only when client builds match and total acquired has not decreased.
 
 ## Recorded activity
