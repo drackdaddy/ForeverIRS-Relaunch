@@ -6,8 +6,9 @@ A character statistics ledger for WoW Forever. View your own gold statistics, in
 
 - Total gold acquired, historical peak gold, and your own current carried gold.
 - Income sources, selected spending counters, auction activity, gameplay, and profession statistics.
-- An **Activity** view with every profession, quests, kills, dungeons, disenchants and their materials, fishing, honorable kills, travel, and deaths.
-- A factual **Recorded activity** summary with readable-counter counts; IRS does not grade characters or infer their play style.
+- **Professions** and **Activity** categories with every profession, quests, kills, dungeons, disenchants and their materials, fishing, honorable kills, travel, and deaths.
+- A **Risk factor** from Low to High, with the figures behind it: how much of a character's peak gold sits above its total gold acquired.
+- A factual **Recorded activity** summary with readable-counter counts; that summary does not grade characters or infer their play style.
 - A movable ledger that fits the screen, with an optional panel beside the normal Inspect window.
 - A searchable directory of all retained characters, sortable by peak gold, total acquired, level, name, last seen, or snapshot count.
 - Up to 20 snapshots per character, with history and a manually copied text report.
@@ -31,9 +32,9 @@ Extract the release ZIP into your Forever client's `Interface/AddOns` directory.
 | `/irs reset` | Reset the window position; retain saved history. |
 | `/irs close` | Close the ledger. |
 
-The window uses the game's own frame, like the Inspect window. Switch views with the tabs along the bottom: **Ledger** (financial figures), **Activity** (every gameplay and profession counter), **History** (saved captures) and **Characters** (the saved-character directory). Hover the activity summary to see the returned counters; hover any figure to see where it came from.
+The window uses the game's own frame, like the Inspect window. The addon version is at the top right, above the reminder that this is informational and it's up to the player to determine wrongdoing. Switch views with the tabs along the bottom: **Ledger** (the risk factor, plus a dropdown for Recorded income, Spending, Auction activity, Professions and Activity, opening on Recorded income), **History** (saved captures) and **Characters** (the saved-character directory). Hover **Risk factor** for the figures and how it is worked out, the activity summary in the **Activity** category for the returned counters, and any figure for where it came from.
 
-The normal Inspect window also has an **IRS** button. Drag the window by its title or header to move it; Escape closes it. **My character**, **Target** and **Refresh** are at the bottom left; **Open with Inspect** is in the header. If inspection is cooling down, a **Loading in…** countdown appears at the top and your requested inspection starts automatically when it ends; you do not need to press Refresh again. **Copy report** opens selectable text for manual copying; nothing is sent to chat. Changing the inspected character closes the previous report. Readable snapshots are saved automatically. **Save snapshot** does not turn an old capture into a new observation.
+The normal Inspect window also has an **IRS** button. Drag the window by its title or header to move it; Escape closes it. **My character**, **Target**, **Refresh** and **Copy report** are at the bottom left; **Open with Inspect** is at the bottom right. If inspection is cooling down, a **Loading in…** countdown appears at the top and your requested inspection starts automatically when it ends; you do not need to press Refresh again. **Copy report** opens selectable text for manual copying; nothing is sent to chat. Changing the inspected character closes the previous report. Readable snapshots are saved automatically.
 
 The addon checks every requested capture. For another player it waits for the inspection reply matching that character, then counts numeric counters that were safely read. The top section appears only as a **red error** when a request fails or no statistics can be read; a wallet value alone does not count. Otherwise the section and its space disappear, including for partial results and saved captures. Loading and cooldown progress stay in the small header status.
 
@@ -41,7 +42,7 @@ The addon checks every requested capture. For another player it waits for the in
 
 ## Saved-character directory
 
-Click the **Characters** tab or use `/irs history`. Each row shows the character's latest saved capture. The default is highest peak gold first. Click a column heading to sort; click it again to reverse. Your chosen sort order is saved. Search matches literal text in a character's name, realm, guild, or class.
+Click the **Characters** tab or use `/irs history`. Each row shows the character's latest saved capture. The default is highest peak gold first. Click a column heading to sort; click it again to reverse. Your chosen sort order is saved. Search matches literal text in a character's name, guild, or class.
 
 Click a row to open that character's saved ledger, then the **History** tab to view earlier captures. Browsing is local and preserves the original observation time. To refresh a saved character, target that same player nearby; IRS will not silently substitute your current target or your own character. Missing numeric values appear as `--` and sort last in either direction; an older known value is not substituted for a missing value in the latest capture.
 
@@ -55,25 +56,40 @@ Click a row to open that character's saved ledger, then the **History** tab to v
 
 The income breakdown shows four sources: gold looted, quest rewards, vendor sales, and auction earnings. It does not itemize gifts, transfers from alts or friends, or player trades (like normal item sales, selling ports or summons, etc.).
 
-**Recorded gold acquired** displays Blizzard's separate **Total gold acquired** statistic. IRS does not calculate that headline by adding the four income rows. The breakdown cannot establish whether Blizzard included a particular gift, trade or mail payment in that separate total. These counters are not a complete record of gold received, and acquired gold is a gross figure, not profit or current wealth. Another player's current wallet is not exposed. Peak gold is a historical high, not their present balance.
+**Recorded gold acquired** displays Blizzard's separate **Total gold acquired** statistic. IRS does not calculate that headline by adding the four income rows. In a test on client 1.60.1.70790, a player trade did not change this total; mail has not been tested. These counters are not a complete record of gold received, and acquired gold is a gross figure, not profit or current wealth. Another player's current wallet is not exposed. Peak gold is a historical high, not their present balance.
 
-**Peak minus acquired** is `max(0, peak gold − total acquired)`. Its blue bar compares recorded acquired gold with peak gold, capped at 100%; **100%+** means acquired exceeds peak. The bar and text use the same neutral styling at every percentage. No percentage is a pass or a failure. A zero peak has no meaningful percentage and is labelled accordingly. Gifts, transfers, direct player sales, missing data, and counter resets may explain a difference; IRS cannot determine where someone's gold came from.
+**This is informational and it's up to the player to determine wrongdoing.**
+
+**Risk factor** puts outside gold on a four-step scale, so you can weigh the figures and decide for yourself:
+
+| Risk factor | Outside gold, as a share of peak gold |
+| --- | --- |
+| Low | Under 25% |
+| Moderate | 25–49% |
+| Elevated | 50–74% |
+| High | 75% or more |
+
+**Outside gold** is peak gold above total gold acquired: `max(0, peak − acquired)`, shown as a share of peak gold. A test trade did not raise total gold acquired, so gold above that total came from outside the game's recorded income. Mail has not been tested. Gold spent before it raised peak gold does not show, so the figure is a low estimate and a Low risk factor does not clear anyone. The Ledger shows the percentage and amounts under the scale, and the tooltip adds peak gold, total acquired and outside gold.
+
+**Unitemized income** is total gold acquired minus the four income rows, never below zero. It appears under **Recorded income** and in copied reports as data only, and it does not affect the risk factor.
+
+**A risk factor is not an accusation or the chance that someone bought gold.** IRS cannot see where gold came from: gifts, alts, guild funds, direct player sales, missing data, and counter resets can all raise it, and it has no way to tell them from purchased gold. A character is not rated when it has under 5g of peak gold or when peak or acquired gold is missing, because a missing counter is not zero. Small totals can reach High from a single gift, so check the amounts as well as the level.
 
 - A grey `--` means no value was captured, never zero. Hover the figure to see why: **not reported** (WoW returned no value) or **unavailable** (no safely readable value was captured, or the statistic/API was not available). Copied reports spell out the reason.
 - A reported numeric zero stays zero. Standard coin-icon amounts are converted to exact copper. Unknown localized formats remain display-only; the addon does not guess their value.
 - Spending shows only the listed categories, not every expense. Income minus these counters is not a complete profit calculation.
-- Profession ranks marked `*` are highest recorded ranks and may belong to a profession no longer learned. The ledger card shows the four highest positive ranks; **Activity** and the report include every queried profession, including zeros and missing values. Disenchants count destroyed items; disenchant materials count their outputs, not extra crafting actions.
+- Profession ranks marked `*` are highest recorded ranks and may belong to a profession no longer learned. The Ledger's **Professions** category and the report include every queried profession, including zeros and missing values. Disenchants count destroyed items; disenchant materials count their outputs, not extra crafting actions.
 - **First seen** means the first locally saved observation, not character creation. History increases compare neighboring observations only when client builds match and total acquired has not decreased.
 
 ## Recorded activity
 
 The summary shows how many readable activity counters have values above zero. It reports returned counts without classifying a character as active, abnormal, suspicious, or legitimate. New characters, bank alts and specialists can have different records. Missing counters are not zero, and gold amounts never change the activity summary.
 
-**A difference does not necessarily indicate wrongdoing** appears as a larger, separate line beside the income-source and transfer explanation on Ledger, Activity and History. The same context appears in tooltips and at the start of copied reports. Older snapshots retain their original values and timestamps; no history reset is needed.
+**A difference does not necessarily indicate wrongdoing** appears directly under the **Risk factor** on Ledger. The same context appears in tooltips and at the start of copied reports. Older snapshots retain their original values and timestamps and are rated from those values; no history reset is needed.
 
 ## Privacy and storage
 
-`ForeverIRSDB` is account-wide SavedVariables data, written by WoW on UI reload or logout. It contains preferences and character GUID, name, realm, class, level, guild, capture time, client build, and the available statistics. Your current wallet is stored only for self-captures. Each character retains their latest 20 snapshots; older captures are removed. Characters are no longer removed automatically when the directory exceeds 50 entries, so the file grows as you inspect more people. Characters already discarded by an older version cannot be recovered by this update. A failed request without a readable capture does not create a directory entry.
+`ForeverIRSDB` is account-wide SavedVariables data, written by WoW on UI reload or logout. It contains preferences and character GUID, name, class, level, guild, capture time, client build, and the available statistics. Your current wallet is stored only for self-captures. Each character retains their latest 20 snapshots; older captures are removed. Characters are no longer removed automatically when the directory exceeds 50 entries, so the file grows as you inspect more people. Characters already discarded by an older version cannot be recovered by this update. A failed request without a readable capture does not create a directory entry.
 
 There is no telemetry, automatic upload, addon-message exchange, chat broadcast, or background player scanning. The addon does not read other addons' saved data or require another addon. SavedVariables and copied reports can contain player identities; they are not included in release archives. To erase local history, close WoW and remove `ForeverIRS.lua` and its `.bak` file from your account's SavedVariables folder. `/irs reset` only resets the window position.
 
@@ -85,7 +101,7 @@ If a request times out, keep the player nearby, leave combat, and click Refresh.
 
 ## Compatibility
 
-Version **0.5.5 Beta** targets **Forever 1.60.x**, Interface **16001**. All 36 statistic definitions were checked against client data **1.60.1.70291** on October 9, 2026: their IDs, labels, flags and criteria references are unchanged from the previously checked **1.60.1.70124**. Both builds are recognized, including when viewing saved captures. This checks the definitions, not whether live server values are current or accurate. Other WoW branches are not supported by this release. The interface is English; unknown localized numeric formats remain display-only. Later game patches may change statistic coverage or meaning and retain an unchecked-build warning until reviewed.
+Version **1.0** targets **Forever 1.60.x**, Interface **16001**. All 36 statistic definitions were checked against client data **1.60.1.70790** on November 5, 2026: their IDs, labels, flags and criteria references are unchanged from the previously checked **1.60.1.70291** and **1.60.1.70124**. All three builds are recognized, including when viewing saved captures. This checks the definitions, not whether live server values are current or accurate. Other WoW branches are not supported by this release. The interface is English; unknown localized numeric formats remain display-only. Later game patches may change statistic coverage or meaning and retain an unchecked-build warning until reviewed.
 
 ## License
 
@@ -112,4 +128,4 @@ python3 scripts/package.py
 
 The package script uses an explicit file list, checks versions and load order, verifies ZIP contents, and writes a checksum. Research, tests, local records, screenshots, and machine-specific files are excluded. The optional source-only design preview uses synthetic data and is not an in-game screenshot.
 
-Statistic definitions: [Wago Achievement data, build 1.60.1.70291](https://wago.tools/db2/Achievement/csv?build=1.60.1.70291). Reference source files retained for development are excluded from the release.
+Statistic definitions: [Wago Achievement data, build 1.60.1.70790](https://wago.tools/db2/Achievement/csv?build=1.60.1.70790). Reference source files retained for development are excluded from the release.

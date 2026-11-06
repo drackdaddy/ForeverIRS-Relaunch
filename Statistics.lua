@@ -1,10 +1,11 @@
 local _, I = ...
-I.VERSION = "0.5.5"
-I.DATA_BUILD = "1.60.1.70291"
+I.VERSION = "1.0"
+I.DATA_BUILD = "1.60.1.70790"
 -- Only builds checked against the retained Achievement.db2 evidence belong
 -- here. Do not treat an unknown patch as checked just because the API replies.
-I.DATA_BUILDS = {["1.60.1.70124"]=true,["1.60.1.70291"]=true}
+I.DATA_BUILDS = {["1.60.1.70124"]=true,["1.60.1.70291"]=true,["1.60.1.70790"]=true}
 I.DISCLAIMER = "Figures may be inaccurate, incomplete, or out of date. Game counters, resets, and addon errors can affect the results. Use them as a reference, not proof of a player's wealth or misconduct."
+I.PLAYER_DISCLAIMER = "This is informational and it's up to the player to determine wrongdoing."
 I.DATA_SOURCE = "Blizzard statistics API"
 I.DATA_SOURCE_NOTICE = "IRS reads Blizzard's statistics API directly; it does not depend on the Statistics page. Values are captured as returned by the client and are not independently verified."
 I.DATA_SOURCE_VERIFY = "This check confirms receipt and safe parsing only. It cannot prove that Blizzard's underlying counters are current, complete or correct."
@@ -159,11 +160,6 @@ end
 function I.numeric(snapshot,key)
     return snapshot and snapshot.values and snapshot.values[key] and snapshot.values[key].number
 end
-function I.gap(snapshot)
-    local peak,total=I.numeric(snapshot,"peak"),I.numeric(snapshot,"acquired")
-    if peak==nil or total==nil then return nil end
-    return math.max(0,peak-total), peak>0 and math.min(1,total/peak) or nil
-end
 function I.sourceStatus(snapshot)
     local client=snapshot and snapshot.build or I.build()
     local selfAPI=type(GetStatistic)=="function"
@@ -209,7 +205,7 @@ end
 function I.read(subject, own)
     local getter
     if own then getter=GetStatistic else getter=GetComparisonStatistic end
-    local snapshot={guid=subject.guid,name=subject.name,realm=subject.realm,class=subject.class,
+    local snapshot={guid=subject.guid,name=subject.name,class=subject.class,
         level=subject.level,guild=subject.guild,build=I.build(),at=GetServerTime(),own=own,values={},unavailable={},available=0}
     for _,field in ipairs(I.fields) do
         local valid=true
@@ -235,8 +231,8 @@ end
 function I.report(s)
     if not s then return "No snapshot loaded." end
     local source=I.sourceStatus(s)
-    local lines={"Forever IRS · character statistics","",I.INCOME_DISCLAIMER:upper(),I.INCOME_SOURCES,I.INCOME_TRANSFERS,"",
-        "Accuracy disclaimer: "..I.DISCLAIMER,"",s.name..(s.realm~="" and " - "..s.realm or ""),
+    local lines={"Forever IRS "..I.VERSION.." · character statistics",I.PLAYER_DISCLAIMER,"",I.INCOME_DISCLAIMER:upper(),I.INCOME_SOURCES,I.INCOME_TRANSFERS,"",
+        "Accuracy disclaimer: "..I.DISCLAIMER,"",s.name,
         "Observed: "..date("%Y-%m-%d %H:%M:%S",s.at).." · client "..s.build,
         "Data source: "..source.source.." (the Statistics page is not used)",
         "Statistic definitions: "..source.definitions,
@@ -259,8 +255,14 @@ function I.report(s)
     lines[#lines+1]=assessment.coverage
     for _,line in ipairs(assessment.evidence) do lines[#lines+1]="- "..line end
     lines[#lines+1]=I.ASSESSMENT_NOTE
-    local gap=I.gap(s)
-    lines[#lines+1]="Peak minus recorded acquired gold (minimum zero): "..I.money(gap,true)
+    local rating=I.rating(s)
+    lines[#lines+1]="Risk factor: "..(rating.percent and rating.risk.." ("..rating.percent.."% outside gold)" or "Not rated")
+    lines[#lines+1]=rating.percent and (I.money(rating.outside,true).." of "..I.money(rating.peak,true).." peak gold is above total acquired gold.") or rating.reason
+    lines[#lines+1]=I.RISK_SCALE
+    lines[#lines+1]=I.RATING_METHOD
+    lines[#lines+1]=I.RATING_NOTE
+    lines[#lines+1]="Unitemized income: "..I.money(I.unitemized(s),true)
+    lines[#lines+1]=I.UNITEMIZED_NOTE
     lines[#lines+1]=I.INCOME_SOURCES
     lines[#lines+1]=I.INCOME_TOTAL_NOTE
     lines[#lines+1]=I.INCOME_TRANSFERS

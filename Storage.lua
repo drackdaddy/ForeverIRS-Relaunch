@@ -13,11 +13,19 @@ local function timestamp(value)
     local n=I.number(value)
     if n and n>=1 and n<=4102444800 and n%1==0 then return n end
 end
+-- Releases before 1.0 saved Forever surnames in a realm field. Joins them to the
+-- first name so old captures read like new ones. raw: a saved snapshot. Returns the name.
+local function fullName(raw)
+    local name=short(raw.name,128,"Unknown")
+    local surname=short(raw.realm,128,"")
+    if surname=="" or surname==GetRealmName() or name:find(" ",1,true) then return name end
+    return name.." "..surname
+end
 function I.cleanSnapshot(raw,guid)
     if type(raw)~="table" or type(raw.values)~="table" then return nil end
     local at=timestamp(raw.at)
     if not at then return nil end
-    local s={guid=guid,name=short(raw.name,128,"Unknown"),realm=short(raw.realm,128,""),
+    local s={guid=guid,name=fullName(raw),
         class=short(raw.class,64,""),guild=short(raw.guild,256),level=I.number(raw.level),
         at=at,build=short(raw.build,64,"unknown"),own=raw.own==true,values={},unavailable={},available=0}
     if s.level and (s.level>1000 or s.level%1~=0) then s.level=nil end
@@ -112,10 +120,10 @@ function I.directoryRows(query,key,descending)
         local latest=entry.snapshots[#entry.snapshots]
         if latest then
             total=total+1
-            local searchable=table.concat({latest.name,latest.realm,latest.guild or "",latest.class}," "):lower()
+            local searchable=table.concat({latest.name,latest.guild or "",latest.class}," "):lower()
             if query=="" or searchable:find(query,1,true) then
                 rows[#rows+1]={guid=guid,snapshot=latest,count=#entry.snapshots,lastSeen=latest.at,
-                    name=(latest.name.." "..latest.realm):lower(),level=latest.level,
+                    name=latest.name:lower(),level=latest.level,
                     peak=I.numeric(latest,"peak"),acquired=I.numeric(latest,"acquired")}
             end
         end
