@@ -51,12 +51,12 @@ I.RATING_MIN_GOLD = 50000 -- 5g in copper.
 -- Each level's name and the lowest unexplained percentage that reaches it.
 I.RISK_LEVELS = {{"Low",0},{"Moderate",25},{"Elevated",50},{"High",75}}
 I.RISK_SCALE = "Scale: Low under 25%, Moderate 25-49%, Elevated 50-74%, High 75% or more unexplained."
-I.RATING_METHOD = "Looted, quest, vendor and auction income, compared with the larger of peak gold and total gold acquired. Tracked spending is left out, so this is a low estimate."
+I.RATING_METHOD = "Looted, quest, vendor and auction income, compared with the larger of peak gold and total gold acquired. Tracked spending is left out, so this is a low estimate. Traded gold only shows if it raised peak gold, so a Low reading does not clear anyone."
 I.RATING_NOTE = "A risk factor is not an accusation or the chance that gold was bought. IRS cannot see where gold came from: gifts, alts, guild funds and player trades look the same as purchased gold."
 I.RATING_LINE = I.INCOME_DISCLAIMER.." Gifts, alts, guild funds and player trades look the same."
 I.RATING_MISSING = "Not rated: peak, acquired and all four income counters are needed."
--- Larger of peak and acquired, because the game does not document whether
--- trades and mail count toward acquired gold; this holds either way.
+-- Larger of peak and acquired: on build 1.60.1.70790 a test trade did not raise
+-- acquired gold, so traded gold can only appear here through peak. Mail is untested.
 -- snapshot: a capture, or nil. Returns {percent,level,risk,unexplained,received,
 -- itemized,peak,acquired} when rated, otherwise {reason}. A missing counter is
 -- never treated as zero: that would inflate the percentage.

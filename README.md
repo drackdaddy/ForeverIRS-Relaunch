@@ -56,7 +56,7 @@ Click a row to open that character's saved ledger, then the **History** tab to v
 
 The income breakdown shows four sources: gold looted, quest rewards, vendor sales, and auction earnings. It does not itemize gifts, transfers from alts or friends, or player trades (like normal item sales, selling ports or summons, etc.).
 
-**Recorded gold acquired** displays Blizzard's separate **Total gold acquired** statistic. IRS does not calculate that headline by adding the four income rows. The breakdown cannot establish whether Blizzard included a particular gift, trade or mail payment in that separate total. These counters are not a complete record of gold received, and acquired gold is a gross figure, not profit or current wealth. Another player's current wallet is not exposed. Peak gold is a historical high, not their present balance.
+**Recorded gold acquired** displays Blizzard's separate **Total gold acquired** statistic. IRS does not calculate that headline by adding the four income rows. In a test on client 1.60.1.70790, a player trade did not change this total; mail has not been tested. These counters are not a complete record of gold received, and acquired gold is a gross figure, not profit or current wealth. Another player's current wallet is not exposed. Peak gold is a historical high, not their present balance.
 
 **This is informational and it's up to the player to determine wrongdoing.**
 
@@ -69,7 +69,7 @@ The income breakdown shows four sources: gold looted, quest rewards, vendor sale
 | Elevated | 50–74% |
 | High | 75% or more |
 
-**Unexplained gold** is the share of a character's gold that the four income rows do not cover: `(received − itemized) ÷ received`, never below 0%. `itemized` is gold looted + quest rewards + vendor sales + auction earnings, and `received` is the larger of peak gold and total gold acquired. Using the larger figure means the result holds whether or not Blizzard counts trades and mail toward total gold acquired. Tracked spending is left out, so the figure is a low estimate. The Ledger shows the percentage and amounts under the scale, and the tooltip adds peak gold, total acquired and itemized income.
+**Unexplained gold** is the share of a character's gold that the four income rows do not cover: `(received − itemized) ÷ received`, never below 0%. `itemized` is gold looted + quest rewards + vendor sales + auction earnings, and `received` is the larger of peak gold and total gold acquired. A test trade did not raise total gold acquired, so traded gold shows up here only if it raised peak gold; gold spent before that point stays invisible. Tracked spending is also left out. The figure is a low estimate, and a Low risk factor does not clear anyone. The Ledger shows the percentage and amounts under the scale, and the tooltip adds peak gold, total acquired and itemized income.
 
 **A risk factor is not an accusation or the chance that someone bought gold.** IRS cannot see where gold came from: gifts, alts, guild funds, direct player sales, missing data, and counter resets can all raise it, and it has no way to tell them from purchased gold. A character is not rated when it has under 5g recorded or when any of the six counters is missing, because a missing counter is not zero. Small totals can reach High from a single gift, so check the amounts as well as the level.
 
