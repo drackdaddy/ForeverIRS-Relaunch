@@ -256,11 +256,13 @@ function I.report(s)
     for _,line in ipairs(assessment.evidence) do lines[#lines+1]="- "..line end
     lines[#lines+1]=I.ASSESSMENT_NOTE
     local rating=I.rating(s)
-    lines[#lines+1]="Risk factor: "..(rating.percent and rating.risk.." ("..rating.percent.."% unexplained gold)" or "Not rated")
-    lines[#lines+1]=rating.percent and (I.money(rating.unexplained,true).." of "..I.money(rating.received,true).." is not covered by the four income rows.") or rating.reason
+    lines[#lines+1]="Risk factor: "..(rating.percent and rating.risk.." ("..rating.percent.."% outside gold)" or "Not rated")
+    lines[#lines+1]=rating.percent and (I.money(rating.outside,true).." of "..I.money(rating.peak,true).." peak gold is above total acquired gold.") or rating.reason
     lines[#lines+1]=I.RISK_SCALE
     lines[#lines+1]=I.RATING_METHOD
     lines[#lines+1]=I.RATING_NOTE
+    lines[#lines+1]="Unitemized income: "..I.money(I.unitemized(s),true)
+    lines[#lines+1]=I.UNITEMIZED_NOTE
     lines[#lines+1]=I.INCOME_SOURCES
     lines[#lines+1]=I.INCOME_TOTAL_NOTE
     lines[#lines+1]=I.INCOME_TRANSFERS

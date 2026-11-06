@@ -364,11 +364,13 @@ function I.Render()
     band.coverage:SetText(a.known.." / "..a.total.." readable")
     local r=I.rating(s);local riskColor=r.level and RISK_COLORS[r.level] or GREY
     ui.ratingValue:SetText(r.risk or "Not rated");ui.ratingValue:SetTextColor(unpack(riskColor))
-    ui.ratingDetail:SetText(r.percent and (r.percent.."% unexplained: "..I.coins(r.unexplained).." of "..I.coins(r.received).." is not covered by recorded income.") or r.reason)
+    ui.ratingDetail:SetText(r.percent and (r.percent.."% outside gold: "..I.coins(r.outside).." of "..I.coins(r.peak).." peak gold is above total acquired gold.") or r.reason)
     ui.ratingDetail:SetTextColor(unpack(r.percent and WHITE or GREY))
     ui.bar:SetVertexColor(unpack(riskColor))
     ui.bar:SetWidth(math.max(.001,(RATING_BAR_WIDTH-2*RATING_BAR_INSET)*(r.percent or 0)/100));ui.bar:SetShown((r.percent or 0)>0)
     for n,label in ipairs(ui.riskLabels) do label:SetTextColor(unpack(n==r.level and RISK_COLORS[n] or GREY)) end
+    local unitemized=I.unitemized(s)
+    ui.unitemized:SetText(I.coins(unitemized));ui.unitemized:SetTextColor(unpack(unitemized and WHITE or GREY))
     for n,p in ipairs(I.professions(s)) do
         local row=ui.ledgerProfessions[n];row.key=p.key
         row.name:SetText(p.label..(p.highest and "*" or ""));show(row.value,s,p.key)
@@ -428,10 +430,10 @@ local function makeLedger()
         local r=I.rating(I.snapshot)
         GameTooltip:SetOwner(self,"ANCHOR_RIGHT");GameTooltip:SetText("Risk factor")
         if r.percent then
-            GameTooltip:AddLine(r.risk.." · "..r.percent.."% unexplained gold",1,1,1,true)
+            GameTooltip:AddLine(r.risk.." · "..r.percent.."% outside gold",1,1,1,true)
             GameTooltip:AddLine("Peak gold: "..I.coins(r.peak),.8,.85,.9,true)
             GameTooltip:AddLine("Total acquired: "..I.coins(r.acquired),.8,.85,.9,true)
-            GameTooltip:AddLine("Itemized income: "..I.coins(r.itemized),.8,.85,.9,true)
+            GameTooltip:AddLine("Outside gold: "..I.coins(r.outside),.8,.85,.9,true)
         end
         GameTooltip:AddLine(I.RISK_SCALE,1,1,1,true)
         GameTooltip:AddLine(I.RATING_METHOD,1,1,1,true)
@@ -463,6 +465,14 @@ local function makeLedger()
         end
         ui.categories[n]=panel
     end
+    -- Data only: the risk factor ignores this row, and it has no statistic of its own.
+    local unitemized=line(ui.categories[1],349,-60,325,3);ui.unitemized=unitemized.value
+    unitemized.name:SetText("Unitemized income")
+    unitemized:SetScript("OnEnter",function(self)
+        if not GameTooltip then return end
+        GameTooltip:SetOwner(self,"ANCHOR_RIGHT");GameTooltip:SetText("Unitemized income")
+        GameTooltip:AddLine(I.UNITEMIZED_NOTE,1,1,1,true);GameTooltip:Show()
+    end)
     -- Factual activity summary under the Activity rows; hover for the returned counters.
     local band=CreateFrame("Frame",nil,ui.categories[#CATEGORIES]);band:SetPoint("TOPLEFT",ui.categories[#CATEGORIES],"TOPLEFT",14,-110);band:SetSize(W-28,32)
     ui.activityBand=band

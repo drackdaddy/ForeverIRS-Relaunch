@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Forever IRS
 ## Notes: A private gold-statistics ledger for yourself and players you inspect.
-## Author: Forever IRS contributors
+## Author: Original Author: wowplayer95; Relaunch Drackwarworks with Claude
 ## Version: 1.0
 ## SavedVariables: ForeverIRSDB
 ## IconTexture: Interface\AddOns\ForeverIRS\Assets\Icon.tga

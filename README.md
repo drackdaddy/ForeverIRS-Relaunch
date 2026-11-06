@@ -7,7 +7,7 @@ A character statistics ledger for WoW Forever. View your own gold statistics, in
 - Total gold acquired, historical peak gold, and your own current carried gold.
 - Income sources, selected spending counters, auction activity, gameplay, and profession statistics.
 - **Professions** and **Activity** categories with every profession, quests, kills, dungeons, disenchants and their materials, fishing, honorable kills, travel, and deaths.
-- A **Risk factor** from Low to High, with the figures behind it: how much of a character's gold its itemized income cannot account for.
+- A **Risk factor** from Low to High, with the figures behind it: how much of a character's peak gold sits above its total gold acquired.
 - A factual **Recorded activity** summary with readable-counter counts; that summary does not grade characters or infer their play style.
 - A movable ledger that fits the screen, with an optional panel beside the normal Inspect window.
 - A searchable directory of all retained characters, sortable by peak gold, total acquired, level, name, last seen, or snapshot count.
@@ -60,18 +60,20 @@ The income breakdown shows four sources: gold looted, quest rewards, vendor sale
 
 **This is informational and it's up to the player to determine wrongdoing.**
 
-**Risk factor** puts unexplained gold on a four-step scale, so you can weigh the figures and decide for yourself:
+**Risk factor** puts outside gold on a four-step scale, so you can weigh the figures and decide for yourself:
 
-| Risk factor | Unexplained gold |
+| Risk factor | Outside gold, as a share of peak gold |
 | --- | --- |
 | Low | Under 25% |
 | Moderate | 25–49% |
 | Elevated | 50–74% |
 | High | 75% or more |
 
-**Unexplained gold** is the share of a character's gold that the four income rows do not cover: `(received − itemized) ÷ received`, never below 0%. `itemized` is gold looted + quest rewards + vendor sales + auction earnings, and `received` is the larger of peak gold and total gold acquired. A test trade did not raise total gold acquired, so traded gold shows up here only if it raised peak gold; gold spent before that point stays invisible. Tracked spending is also left out. The figure is a low estimate, and a Low risk factor does not clear anyone. The Ledger shows the percentage and amounts under the scale, and the tooltip adds peak gold, total acquired and itemized income.
+**Outside gold** is peak gold above total gold acquired: `max(0, peak − acquired)`, shown as a share of peak gold. A test trade did not raise total gold acquired, so gold above that total came from outside the game's recorded income. Mail has not been tested. Gold spent before it raised peak gold does not show, so the figure is a low estimate and a Low risk factor does not clear anyone. The Ledger shows the percentage and amounts under the scale, and the tooltip adds peak gold, total acquired and outside gold.
 
-**A risk factor is not an accusation or the chance that someone bought gold.** IRS cannot see where gold came from: gifts, alts, guild funds, direct player sales, missing data, and counter resets can all raise it, and it has no way to tell them from purchased gold. A character is not rated when it has under 5g recorded or when any of the six counters is missing, because a missing counter is not zero. Small totals can reach High from a single gift, so check the amounts as well as the level.
+**Unitemized income** is total gold acquired minus the four income rows, never below zero. It appears under **Recorded income** and in copied reports as data only, and it does not affect the risk factor.
+
+**A risk factor is not an accusation or the chance that someone bought gold.** IRS cannot see where gold came from: gifts, alts, guild funds, direct player sales, missing data, and counter resets can all raise it, and it has no way to tell them from purchased gold. A character is not rated when it has under 5g of peak gold or when peak or acquired gold is missing, because a missing counter is not zero. Small totals can reach High from a single gift, so check the amounts as well as the level.
 
 - A grey `--` means no value was captured, never zero. Hover the figure to see why: **not reported** (WoW returned no value) or **unavailable** (no safely readable value was captured, or the statistic/API was not available). Copied reports spell out the reason.
 - A reported numeric zero stays zero. Standard coin-icon amounts are converted to exact copper. Unknown localized formats remain display-only; the addon does not guess their value.

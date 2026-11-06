@@ -2,8 +2,9 @@
 
 ## 1.0 — 2026-11-05
 
-- Add a **Risk factor** scale from Low to High, based on the share of a character's gold that looted, quest, vendor and auction income does not cover. It uses the larger of peak and total acquired gold, works on existing saved captures, and sends no extra requests. It replaces **Peak minus acquired**, which read zero whenever acquired exceeded peak.
-- Show the percentage and gold amounts with the scale, and peak, acquired and itemized figures in its tooltip, so players can weigh the data themselves. A risk factor is not an accusation or the chance that gold was bought; gifts, alts, guild funds and player trades look the same as purchased gold. Characters with under 5g recorded or a missing counter are not rated.
+- Add a **Risk factor** scale from Low to High, based on outside gold: peak gold above total gold acquired, as a share of peak gold. A test trade did not raise total gold acquired, so gold above that total came from outside the game's recorded income. It works on existing saved captures, sends no extra requests, and replaces the **Peak minus acquired** bar.
+- Show the percentage and gold amounts with the scale, and peak, acquired and outside gold in its tooltip, so players can weigh the data themselves. A risk factor is not an accusation or the chance that gold was bought; gifts, alts, guild funds and player trades look the same as purchased gold. Characters with under 5g of peak gold or a missing peak or acquired figure are not rated.
+- Add **Unitemized income** to **Recorded income** and copied reports: total gold acquired minus the four income rows, shown as data only.
 - Show Forever's full character name, such as Drack Daddy. The game returns the surname where other clients return the realm, so earlier versions listed it as a realm. Saved captures are corrected when they load, and the realm field is gone.
 - Check all 36 statistic definitions against client build 1.60.1.70790 and recognize that build, which clears the client build warning on the current client.
 - Show the version at the top right, with a reminder beneath it that this is informational and it's up to the player to determine wrongdoing. Copied reports carry the same reminder.
