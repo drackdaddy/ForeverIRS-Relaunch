@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0 — 2026-11-05
+
+- Add a **Risk factor** scale from Low to High, based on outside gold: peak gold above total gold acquired, as a share of peak gold. A test trade did not raise total gold acquired, so gold above that total came from outside the game's recorded income. It works on existing saved captures, sends no extra requests, and replaces the **Peak minus acquired** bar.
+- Show the percentage and gold amounts with the scale, and peak, acquired and outside gold in its tooltip, so players can weigh the data themselves. A risk factor is not an accusation or the chance that gold was bought; gifts, alts, guild funds and player trades look the same as purchased gold. Characters with under 5g of peak gold or a missing peak or acquired figure are not rated.
+- Add **Unitemized income** to **Recorded income** and copied reports: total gold acquired minus the four income rows, shown as data only.
+- Show Forever's full character name, such as Drack Daddy. The game returns the surname where other clients return the realm, so earlier versions listed it as a realm. Saved captures are corrected when they load, and the realm field is gone.
+- Check all 36 statistic definitions against client build 1.60.1.70790 and recognize that build, which clears the client build warning on the current client.
+- Show the version at the top right, with a reminder beneath it that this is informational and it's up to the player to determine wrongdoing. Copied reports carry the same reminder.
+- Declutter the window: it is now 690 × 432 instead of 690 × 568. Ledger shows the risk factor and one category of figures at a time, and activity and disclaimer text no longer repeats above every tab.
+- Replace the Ledger's stacked sections and the **Activity** tab with a dropdown for Recorded income, Spending, Auction activity, Professions and Activity. It opens on Recorded income.
+- Replace the large stacked disclaimers with one line under the risk factor. The full context stays in tooltips and copied reports.
+- Move the activity summary into the **Activity** category, and the first-seen date and client build into the **History** heading. Remove the Ledger's Gameplay and Your local record blocks, which repeated other views.
+- Move the notes under the headline figures into tooltips, and **Open with Inspect** to the bottom right.
+- Remove **Save snapshot**: readable captures already save automatically, so it could only report that a capture was already saved.
+- Show eight characters per page in **Characters** instead of nine, to fit the shorter window.
+
 ## 0.5.5 — 2026-10-09 — Beta
 
 - Replace gameplay judgments with a factual summary of recorded activity and neutral gold comparisons.
